@@ -11,6 +11,9 @@ import java.util.Objects;
 
 /**
  * Raiz del agregado Publicacion: el anuncio de un producto que un vendedor pone a la venta.
+ *
+ * Invariantes:
+ * 1. El precio siempre es mayor a cero.
  */
 public class Publicacion {
 
@@ -44,6 +47,9 @@ public class Publicacion {
         }
         if (nombreProducto == null || nombreProducto.isBlank()) {
             throw new ReglaDominioException("El nombre del producto es obligatorio");
+        }
+        if (precio == null || !precio.esMayorQueCero()) {
+            throw new ReglaDominioException("El precio de la publicacion debe ser mayor a cero");
         }
         if (stock == null || categoria == null) {
             throw new ReglaDominioException("La publicacion necesita stock y categoria");
