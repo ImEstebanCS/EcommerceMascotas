@@ -14,6 +14,7 @@ import java.util.Objects;
  *
  * Invariantes:
  * 1. El precio siempre es mayor a cero.
+ * 2. La especie destino siempre es PERRO o GATO (nunca null).
  */
 public class Publicacion {
 
@@ -47,6 +48,9 @@ public class Publicacion {
         }
         if (nombreProducto == null || nombreProducto.isBlank()) {
             throw new ReglaDominioException("El nombre del producto es obligatorio");
+        }
+        if (especieDestino == null) {
+            throw new ReglaDominioException("La publicacion debe ser para perro o gato");
         }
         if (precio == null || !precio.esMayorQueCero()) {
             throw new ReglaDominioException("El precio de la publicacion debe ser mayor a cero");
