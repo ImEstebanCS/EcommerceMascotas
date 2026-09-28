@@ -17,6 +17,7 @@ import java.util.Objects;
  * 1. El precio siempre es mayor a cero.
  * 2. La especie destino siempre es PERRO o GATO (nunca null).
  * 3. Una publicacion PUBLICADA tiene stock >= 1; si el stock llega a 0 pasa a AGOTADA.
+ * 4. RETIRADA es un estado final: no vuelve a publicarse ni acepta pedidos.
  */
 public class Publicacion {
 
@@ -64,6 +65,9 @@ public class Publicacion {
     }
 
     public void publicar() {
+        if (estado == EstadoPublicacion.RETIRADA) {
+            throw new ReglaDominioException("Una publicacion retirada no puede volver a publicarse");
+        }
         if (stock.estaAgotado()) {
             throw new ReglaDominioException("No se puede publicar sin stock disponible");
         }
@@ -81,12 +85,22 @@ public class Publicacion {
     }
 
     public void actualizarStock(Stock nuevoStock) {
+        if (estado == EstadoPublicacion.RETIRADA) {
+            throw new ReglaDominioException("No se puede cambiar el stock de una publicacion retirada");
+        }
         stock = nuevoStock;
         if (estado == EstadoPublicacion.PUBLICADA && stock.estaAgotado()) {
             estado = EstadoPublicacion.AGOTADA;
         } else if (estado == EstadoPublicacion.AGOTADA && !stock.estaAgotado()) {
             estado = EstadoPublicacion.PUBLICADA;
         }
+    }
+
+    public void retirar() {
+        if (estado == EstadoPublicacion.RETIRADA) {
+            throw new ReglaDominioException("La publicacion ya esta retirada");
+        }
+        estado = EstadoPublicacion.RETIRADA;
     }
 
     public boolean aceptaPedidos() {
