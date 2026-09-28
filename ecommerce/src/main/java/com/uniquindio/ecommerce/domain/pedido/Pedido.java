@@ -17,6 +17,7 @@ import java.util.Objects;
  *
  * Invariantes:
  * 2. Todas las lineas son de especie PERRO o GATO.
+ * 3. La cantidad de cada linea es > 0 y <= stock de su publicacion.
  * 4. El total siempre es la suma de los subtotales de las lineas.
  */
 public class Pedido {
@@ -57,10 +58,18 @@ public class Pedido {
         if (buscarLinea(publicacion.getId()) != null) {
             throw new ReglaDominioException("La publicacion ya esta en el pedido, modifique la cantidad");
         }
+        validarStock(publicacion, cantidad);
 
         lineas.add(LineaPedido.crear(publicacion.getId(), publicacion.getEspecieDestino(),
                 cantidad, publicacion.getPrecio()));
         recalcularTotal();
+    }
+
+    private void validarStock(Publicacion publicacion, Cantidad cantidad) {
+        if (!publicacion.getStock().hayDisponible(cantidad)) {
+            throw new ReglaDominioException("La cantidad pedida de " + publicacion.getNombreProducto()
+                    + " supera el stock disponible (" + publicacion.getStock().unidades() + ")");
+        }
     }
 
     private void recalcularTotal() {
