@@ -1,5 +1,6 @@
 package com.uniquindio.ecommerce.domain.publicacion;
 
+import com.uniquindio.ecommerce.domain.shared.Cantidad;
 import com.uniquindio.ecommerce.domain.shared.Dinero;
 import com.uniquindio.ecommerce.domain.shared.EspecieDestino;
 import com.uniquindio.ecommerce.domain.shared.PublicacionId;
@@ -15,6 +16,7 @@ import java.util.Objects;
  * Invariantes:
  * 1. El precio siempre es mayor a cero.
  * 2. La especie destino siempre es PERRO o GATO (nunca null).
+ * 3. Una publicacion PUBLICADA tiene stock >= 1; si el stock llega a 0 pasa a AGOTADA.
  */
 public class Publicacion {
 
@@ -59,6 +61,36 @@ public class Publicacion {
             throw new ReglaDominioException("La publicacion necesita stock y categoria");
         }
         return new Publicacion(id, vendedorId, nombreProducto, especieDestino, precio, stock, categoria);
+    }
+
+    public void publicar() {
+        if (stock.estaAgotado()) {
+            throw new ReglaDominioException("No se puede publicar sin stock disponible");
+        }
+        estado = EstadoPublicacion.PUBLICADA;
+    }
+
+    public void descontarStock(Cantidad cantidad) {
+        if (!aceptaPedidos()) {
+            throw new ReglaDominioException("La publicacion no esta disponible para pedidos");
+        }
+        stock = stock.descontar(cantidad);
+        if (stock.estaAgotado()) {
+            estado = EstadoPublicacion.AGOTADA;
+        }
+    }
+
+    public void actualizarStock(Stock nuevoStock) {
+        stock = nuevoStock;
+        if (estado == EstadoPublicacion.PUBLICADA && stock.estaAgotado()) {
+            estado = EstadoPublicacion.AGOTADA;
+        } else if (estado == EstadoPublicacion.AGOTADA && !stock.estaAgotado()) {
+            estado = EstadoPublicacion.PUBLICADA;
+        }
+    }
+
+    public boolean aceptaPedidos() {
+        return estado == EstadoPublicacion.PUBLICADA;
     }
 
     public PublicacionId getId() {
