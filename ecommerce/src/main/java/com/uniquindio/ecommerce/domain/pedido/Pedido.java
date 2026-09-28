@@ -20,6 +20,7 @@ import java.util.Objects;
  * 2. Todas las lineas son de especie PERRO o GATO.
  * 3. La cantidad de cada linea es > 0 y <= stock de su publicacion.
  * 4. El total siempre es la suma de los subtotales de las lineas.
+ * 5. Un pedido ENVIADO, ENTREGADO o CANCELADO no modifica lineas ni cantidades.
  */
 public class Pedido {
 
@@ -47,6 +48,7 @@ public class Pedido {
     }
 
     public void agregarLinea(Publicacion publicacion, Cantidad cantidad) {
+        validarQueSePuedeModificar();
         if (!publicacion.aceptaPedidos()) {
             throw new ReglaDominioException("La publicacion " + publicacion.getNombreProducto() + " no acepta pedidos");
         }
@@ -63,6 +65,27 @@ public class Pedido {
 
         lineas.add(LineaPedido.crear(publicacion.getId(), publicacion.getEspecieDestino(),
                 cantidad, publicacion.getPrecio()));
+        recalcularTotal();
+    }
+
+    public void cambiarCantidad(Publicacion publicacion, Cantidad nuevaCantidad) {
+        validarQueSePuedeModificar();
+        LineaPedido linea = buscarLinea(publicacion.getId());
+        if (linea == null) {
+            throw new ReglaDominioException("La publicacion no hace parte del pedido");
+        }
+        validarStock(publicacion, nuevaCantidad);
+        linea.cambiarCantidad(nuevaCantidad);
+        recalcularTotal();
+    }
+
+    public void quitarLinea(PublicacionId publicacionId) {
+        validarQueSePuedeModificar();
+        LineaPedido linea = buscarLinea(publicacionId);
+        if (linea == null) {
+            throw new ReglaDominioException("La publicacion no hace parte del pedido");
+        }
+        lineas.remove(linea);
         recalcularTotal();
     }
 
@@ -84,6 +107,32 @@ public class Pedido {
             validarStock(publicacion, linea.getCantidad());
         }
         estado = EstadoPedido.CONFIRMADO;
+    }
+
+    public void enviar() {
+        if (estado != EstadoPedido.CONFIRMADO) {
+            throw new ReglaDominioException("Solo se puede enviar un pedido confirmado");
+        }
+        estado = EstadoPedido.ENVIADO;
+    }
+
+    public void entregar() {
+        if (estado != EstadoPedido.ENVIADO) {
+            throw new ReglaDominioException("Solo se puede entregar un pedido enviado");
+        }
+        estado = EstadoPedido.ENTREGADO;
+    }
+
+    public void cancelar() {
+        validarQueSePuedeModificar();
+        estado = EstadoPedido.CANCELADO;
+    }
+
+    private void validarQueSePuedeModificar() {
+        if (estado == EstadoPedido.ENVIADO || estado == EstadoPedido.ENTREGADO
+                || estado == EstadoPedido.CANCELADO) {
+            throw new ReglaDominioException("Un pedido " + estado + " ya no se puede modificar");
+        }
     }
 
     private void validarStock(Publicacion publicacion, Cantidad cantidad) {
