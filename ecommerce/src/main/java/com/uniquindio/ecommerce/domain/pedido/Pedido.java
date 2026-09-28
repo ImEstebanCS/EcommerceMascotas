@@ -16,6 +16,7 @@ import java.util.Objects;
  * Raiz del agregado Pedido. Todo cambio a las lineas pasa por aqui.
  *
  * Invariantes:
+ * 2. Todas las lineas son de especie PERRO o GATO.
  * 4. El total siempre es la suma de los subtotales de las lineas.
  */
 public class Pedido {
@@ -46,6 +47,9 @@ public class Pedido {
     public void agregarLinea(Publicacion publicacion, Cantidad cantidad) {
         if (!publicacion.aceptaPedidos()) {
             throw new ReglaDominioException("La publicacion " + publicacion.getNombreProducto() + " no acepta pedidos");
+        }
+        if (publicacion.getEspecieDestino() == null) {
+            throw new ReglaDominioException("Solo se pueden pedir productos para perros o gatos");
         }
         if (!publicacion.getPrecio().moneda().equals(MONEDA)) {
             throw new ReglaDominioException("El pedido solo maneja precios en " + MONEDA);
