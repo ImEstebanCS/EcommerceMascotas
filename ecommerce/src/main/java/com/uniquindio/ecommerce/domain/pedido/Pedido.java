@@ -16,6 +16,7 @@ import java.util.Objects;
  * Raiz del agregado Pedido. Todo cambio a las lineas pasa por aqui.
  *
  * Invariantes:
+ * 1. Un pedido confirmado siempre tiene al menos una linea.
  * 2. Todas las lineas son de especie PERRO o GATO.
  * 3. La cantidad de cada linea es > 0 y <= stock de su publicacion.
  * 4. El total siempre es la suma de los subtotales de las lineas.
@@ -63,6 +64,26 @@ public class Pedido {
         lineas.add(LineaPedido.crear(publicacion.getId(), publicacion.getEspecieDestino(),
                 cantidad, publicacion.getPrecio()));
         recalcularTotal();
+    }
+
+    /**
+     * Recibe las publicaciones de las lineas para revisar el stock antes de confirmar.
+     */
+    public void confirmar(List<Publicacion> publicaciones) {
+        if (estado != EstadoPedido.BORRADOR) {
+            throw new ReglaDominioException("Solo se puede confirmar un pedido en borrador");
+        }
+        if (lineas.isEmpty()) {
+            throw new ReglaDominioException("No se puede confirmar un pedido sin lineas");
+        }
+        for (LineaPedido linea : lineas) {
+            Publicacion publicacion = publicaciones.stream()
+                    .filter(p -> p.getId().equals(linea.getPublicacionId()))
+                    .findFirst()
+                    .orElseThrow(() -> new ReglaDominioException("Falta la publicacion de una linea del pedido"));
+            validarStock(publicacion, linea.getCantidad());
+        }
+        estado = EstadoPedido.CONFIRMADO;
     }
 
     private void validarStock(Publicacion publicacion, Cantidad cantidad) {
