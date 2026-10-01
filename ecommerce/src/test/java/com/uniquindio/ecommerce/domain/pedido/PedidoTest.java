@@ -42,4 +42,16 @@ class PedidoTest {
         assertEquals(0, pedido.getTotal().monto().compareTo(BigDecimal.ZERO));
         assertEquals(0, pedido.getLineas().size());
     }
+
+    @Test
+    void confirmarPedidoSinLineasLanzaReglaDominioException() {
+        // Arrange
+        Pedido pedido = Pedido.crear(PedidoId.nuevo(), CompradorId.nuevo());
+
+        // Act
+        Executable confirmar = () -> pedido.confirmar(List.of());
+
+        // Assert
+        assertThrows(ReglaDominioException.class, confirmar);
+    }
 }
