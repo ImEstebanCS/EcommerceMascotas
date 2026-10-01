@@ -54,4 +54,17 @@ class PedidoTest {
         // Assert
         assertThrows(ReglaDominioException.class, confirmar);
     }
+
+    @Test
+    void agregarLineaConCantidadMayorAlStockLanzaReglaDominioException() {
+        // Arrange
+        Pedido pedido = Pedido.crear(PedidoId.nuevo(), CompradorId.nuevo());
+        Publicacion collar = publicacionPublicada("Collar reflectivo", EspecieDestino.PERRO, "20000", 3);
+
+        // Act
+        Executable agregar = () -> pedido.agregarLinea(collar, new Cantidad(4));
+
+        // Assert
+        assertThrows(ReglaDominioException.class, agregar);
+    }
 }
