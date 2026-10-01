@@ -41,4 +41,17 @@ class PublicacionTest {
         assertEquals(concentrado.hashCode(), mismaConOtrosDatos.hashCode());
         assertFalse(igualesConOtroId);
     }
+
+    @Test
+    void crearPublicacionConPrecioCeroLanzaReglaDominioException() {
+        // Arrange
+        Dinero precioCero = Dinero.cero("COP");
+
+        // Act
+        Executable crear = () -> Publicacion.crear(PublicacionId.nuevo(), VendedorId.nuevo(),
+                "Arena para gato", EspecieDestino.GATO, precioCero, new Stock(5), CategoriaProducto.HIGIENE);
+
+        // Assert
+        assertThrows(ReglaDominioException.class, crear);
+    }
 }
