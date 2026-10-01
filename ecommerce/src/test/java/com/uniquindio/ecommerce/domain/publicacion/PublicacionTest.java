@@ -54,4 +54,18 @@ class PublicacionTest {
         // Assert
         assertThrows(ReglaDominioException.class, crear);
     }
+
+    @Test
+    void descontarStockHastaCeroDejaLaPublicacionAgotada() {
+        // Arrange
+        Publicacion pelota = crearPublicacion(PublicacionId.nuevo(), "Pelota de caucho", 2);
+        pelota.publicar();
+
+        // Act
+        pelota.descontarStock(new Cantidad(2));
+
+        // Assert
+        assertEquals(0, pelota.getStock().unidades());
+        assertEquals(EstadoPublicacion.AGOTADA, pelota.getEstado());
+    }
 }
