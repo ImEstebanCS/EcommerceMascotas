@@ -67,4 +67,23 @@ class PedidoTest {
         // Assert
         assertThrows(ReglaDominioException.class, agregar);
     }
+
+    @Test
+    void totalDelPedidoEsLaSumaDeLosSubtotalesDeSusLineas() {
+        // Arrange
+        Pedido pedido = Pedido.crear(PedidoId.nuevo(), CompradorId.nuevo());
+        Publicacion collar = publicacionPublicada("Collar reflectivo", EspecieDestino.PERRO, "20000", 10);
+        Publicacion rascador = publicacionPublicada("Rascador de carton", EspecieDestino.GATO, "35000", 5);
+
+        // Act
+        pedido.agregarLinea(collar, new Cantidad(2));
+        pedido.agregarLinea(rascador, new Cantidad(1));
+
+        // Assert
+        BigDecimal sumaSubtotales = pedido.getLineas().stream()
+                .map(linea -> linea.getSubtotal().monto())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        assertEquals(0, new BigDecimal("75000").compareTo(pedido.getTotal().monto()));
+        assertEquals(0, sumaSubtotales.compareTo(pedido.getTotal().monto()));
+    }
 }
