@@ -87,4 +87,20 @@ class PedidoTest {
         assertEquals(0, new BigDecimal("75000").compareTo(pedido.getTotal().monto()));
         assertEquals(0, sumaSubtotales.compareTo(pedido.getTotal().monto()));
     }
+
+    @Test
+    void confirmarConUnaPublicacionRetiradaLanzaReglaDominioExceptionYElPedidoSigueEnBorrador() {
+        // Arrange: el pedido tiene un collar, y despues el vendedor retira la publicacion
+        Pedido pedido = Pedido.crear(PedidoId.nuevo(), CompradorId.nuevo());
+        Publicacion collar = publicacionPublicada("Collar reflectivo", EspecieDestino.PERRO, "20000", 5);
+        pedido.agregarLinea(collar, new Cantidad(1));
+        collar.retirar();
+
+        // Act
+        Executable confirmar = () -> pedido.confirmar(List.of(collar));
+
+        // Assert
+        assertThrows(ReglaDominioException.class, confirmar);
+        assertEquals(EstadoPedido.BORRADOR, pedido.getEstado());
+    }
 }
