@@ -10,22 +10,24 @@ import com.uniquindio.ecommerce.domain.valueobject.CompradorId;
 import com.uniquindio.ecommerce.domain.valueobject.PedidoId;
 import com.uniquindio.ecommerce.domain.valueobject.PublicacionId;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.NoSuchElementException;
 
 /**
  * Caso de uso del comprador: crear un pedido en borrador con sus lineas.
  * Repositories: PedidoRepository y PublicacionRepository.
  */
+@Service
+@RequiredArgsConstructor
 public class CrearPedidoUseCase {
 
     private final PedidoRepository pedidoRepository;
     private final PublicacionRepository publicacionRepository;
 
-    public CrearPedidoUseCase(PedidoRepository pedidoRepository, PublicacionRepository publicacionRepository) {
-        this.pedidoRepository = pedidoRepository;
-        this.publicacionRepository = publicacionRepository;
-    }
-
+    @Transactional
     public PedidoId ejecutar(CrearPedidoRequest request) {
         Pedido pedido = Pedido.crear(PedidoId.nuevo(), new CompradorId(request.compradorId()));
 

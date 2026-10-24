@@ -8,6 +8,10 @@ import com.uniquindio.ecommerce.domain.repository.PedidoRepository;
 import com.uniquindio.ecommerce.domain.repository.PublicacionRepository;
 import com.uniquindio.ecommerce.domain.valueobject.PedidoId;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -17,16 +21,14 @@ import java.util.UUID;
  * Caso de uso del comprador: confirmar un pedido y descontar el stock de sus publicaciones.
  * Repositories: PedidoRepository y PublicacionRepository.
  */
+@Service
+@RequiredArgsConstructor
 public class ConfirmarPedidoUseCase {
 
     private final PedidoRepository pedidoRepository;
     private final PublicacionRepository publicacionRepository;
 
-    public ConfirmarPedidoUseCase(PedidoRepository pedidoRepository, PublicacionRepository publicacionRepository) {
-        this.pedidoRepository = pedidoRepository;
-        this.publicacionRepository = publicacionRepository;
-    }
-
+    @Transactional
     public PedidoResponse ejecutar(UUID pedidoId) {
         Pedido pedido = pedidoRepository.buscarPorId(new PedidoId(pedidoId))
                 .orElseThrow(() -> new NoSuchElementException("El pedido " + pedidoId + " no existe"));
