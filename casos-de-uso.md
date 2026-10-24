@@ -4,12 +4,12 @@ Cada caso de uso solo orquesta: busca en los repositorios, llama a los métodos 
 
 | # | Caso de uso | Rol | Repository que necesita | Estado |
 |---|---|---|---|---|
-| 1 | **CrearPublicacion** | Vendedor | `PublicacionRepository` | Implementado: [CrearPublicacion.java](ecommerce/src/main/java/com/uniquindio/ecommerce/application/publicacion/CrearPublicacion.java) |
+| 1 | **CrearPublicacion** | Vendedor | `PublicacionRepository` | Implementado: [CrearPublicacionUseCase.java](ecommerce/src/main/java/com/uniquindio/ecommerce/application/usecase/CrearPublicacionUseCase.java) |
 | 2 | **ActualizarStockPublicacion** | Vendedor | `PublicacionRepository` | Documentado |
 | 3 | **RetirarPublicacion** | Vendedor | `PublicacionRepository` | Documentado |
-| 4 | **CrearPedido** | Comprador | `PedidoRepository`, `PublicacionRepository` | Implementado: [CrearPedido.java](ecommerce/src/main/java/com/uniquindio/ecommerce/application/pedido/CrearPedido.java) |
+| 4 | **CrearPedido** | Comprador | `PedidoRepository`, `PublicacionRepository` | Implementado: [CrearPedidoUseCase.java](ecommerce/src/main/java/com/uniquindio/ecommerce/application/usecase/CrearPedidoUseCase.java) |
 | 5 | **AgregarLineaAPedido** | Comprador | `PedidoRepository`, `PublicacionRepository` | Documentado |
-| 6 | **ConfirmarPedido** | Comprador | `PedidoRepository`, `PublicacionRepository` | Implementado: [ConfirmarPedido.java](ecommerce/src/main/java/com/uniquindio/ecommerce/application/pedido/ConfirmarPedido.java) |
+| 6 | **ConfirmarPedido** | Comprador | `PedidoRepository`, `PublicacionRepository` | Implementado: [ConfirmarPedidoUseCase.java](ecommerce/src/main/java/com/uniquindio/ecommerce/application/usecase/ConfirmarPedidoUseCase.java) |
 | 7 | **ModificarPedidoAntesDeDespacho** | Comprador | `PedidoRepository`, `PublicacionRepository` | Documentado |
 | 8 | **CancelarPedido** | Comprador | `PedidoRepository` | Documentado |
 

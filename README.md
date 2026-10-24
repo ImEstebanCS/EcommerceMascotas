@@ -16,17 +16,21 @@ Proyecto del curso Programación Avanzada, Universidad del Quindío, 2026-2.
 ```
 ecommerce/src/main/java/com/uniquindio/ecommerce
 ├── domain
-│   ├── pedido        → Pedido, LineaPedido, EstadoPedido, PedidoRepository
-│   ├── publicacion   → Publicacion, EstadoPublicacion, CategoriaProducto, PublicacionRepository
-│   └── shared        → Dinero, Cantidad, Stock, EspecieDestino, ids, ReglaDominioException
+│   ├── entity        → Pedido, LineaPedido, Publicacion
+│   ├── valueobject   → Dinero, Cantidad, Stock, EspecieDestino, PedidoId, PublicacionId,
+│   │                   CompradorId, VendedorId, EstadoPedido, EstadoPublicacion, CategoriaProducto
+│   ├── repository    → PedidoRepository, PublicacionRepository (interfaces)
+│   └── exception     → ReglaDominioException
 ├── application
-│   ├── pedido        → CrearPedido, ConfirmarPedido
-│   ├── publicacion   → CrearPublicacion
-│   └── dto           → CrearPublicacionRequest, CrearPedidoRequest, PedidoResponse
+│   ├── dto
+│   │   ├── request   → CrearPublicacionRequest, CrearPedidoRequest
+│   │   └── response  → PedidoResponse
+│   └── usecase       → CrearPublicacionUseCase, CrearPedidoUseCase, ConfirmarPedidoUseCase
 └── infrastructure
     └── persistence   → PedidoRepositoryEnMemoria, PublicacionRepositoryEnMemoria
 ```
 
+Las clases se organizan **por tipo** (entidades, value objects, repositorios, excepción, casos de uso, DTOs), siguiendo el repositorio guía del curso.
 El paquete `domain` no depende de Spring, JPA ni Lombok. Los repositorios son interfaces en el dominio y su implementación (con `HashMap`) está en infraestructura.
 
 ## Documentación

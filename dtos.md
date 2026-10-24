@@ -4,7 +4,7 @@ Los DTOs son `record` y viven en [application/dto](ecommerce/src/main/java/com/u
 
 ## CrearPublicacionRequest
 
-Entrada del caso de uso **CrearPublicacion**. [Ver código](ecommerce/src/main/java/com/uniquindio/ecommerce/application/dto/CrearPublicacionRequest.java)
+Entrada del caso de uso **CrearPublicacion**. [Ver código](ecommerce/src/main/java/com/uniquindio/ecommerce/application/dto/request/CrearPublicacionRequest.java)
 
 | Campo | Tipo | Por qué es necesario |
 |---|---|---|
@@ -18,7 +18,7 @@ Entrada del caso de uso **CrearPublicacion**. [Ver código](ecommerce/src/main/j
 
 ## CrearPedidoRequest
 
-Entrada del caso de uso **CrearPedido**. [Ver código](ecommerce/src/main/java/com/uniquindio/ecommerce/application/dto/CrearPedidoRequest.java)
+Entrada del caso de uso **CrearPedido**. [Ver código](ecommerce/src/main/java/com/uniquindio/ecommerce/application/dto/request/CrearPedidoRequest.java)
 
 | Campo | Tipo | Por qué es necesario |
 |---|---|---|
@@ -31,7 +31,7 @@ El precio no viene en el request a propósito: lo toma el dominio de la publicac
 
 ## PedidoResponse
 
-Salida del caso de uso **ConfirmarPedido**. [Ver código](ecommerce/src/main/java/com/uniquindio/ecommerce/application/dto/PedidoResponse.java)
+Salida del caso de uso **ConfirmarPedido**. [Ver código](ecommerce/src/main/java/com/uniquindio/ecommerce/application/dto/response/PedidoResponse.java)
 
 | Campo | Tipo | Por qué es necesario |
 |---|---|---|

@@ -1,9 +1,9 @@
 package com.uniquindio.ecommerce.infrastructure.persistence;
 
-import com.uniquindio.ecommerce.domain.publicacion.Publicacion;
-import com.uniquindio.ecommerce.domain.publicacion.PublicacionRepository;
-import com.uniquindio.ecommerce.domain.shared.EspecieDestino;
-import com.uniquindio.ecommerce.domain.shared.PublicacionId;
+import com.uniquindio.ecommerce.domain.entity.Publicacion;
+import com.uniquindio.ecommerce.domain.repository.PublicacionRepository;
+import com.uniquindio.ecommerce.domain.valueobject.EspecieDestino;
+import com.uniquindio.ecommerce.domain.valueobject.PublicacionId;
 
 import java.util.HashMap;
 import java.util.List;
