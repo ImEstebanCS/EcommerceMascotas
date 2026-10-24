@@ -7,6 +7,10 @@ import com.uniquindio.ecommerce.domain.repository.PedidoRepository;
 import com.uniquindio.ecommerce.domain.repository.PublicacionRepository;
 import com.uniquindio.ecommerce.domain.valueobject.PedidoId;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
@@ -16,16 +20,14 @@ import java.util.UUID;
  * las unidades que el pedido ya habia descontado.
  * Repositories: PedidoRepository y PublicacionRepository.
  */
+@Service
+@RequiredArgsConstructor
 public class CancelarPedidoUseCase {
 
     private final PedidoRepository pedidoRepository;
     private final PublicacionRepository publicacionRepository;
 
-    public CancelarPedidoUseCase(PedidoRepository pedidoRepository, PublicacionRepository publicacionRepository) {
-        this.pedidoRepository = pedidoRepository;
-        this.publicacionRepository = publicacionRepository;
-    }
-
+    @Transactional
     public void ejecutar(UUID pedidoId) {
         Pedido pedido = pedidoRepository.buscarPorId(new PedidoId(pedidoId))
                 .orElseThrow(() -> new NoSuchElementException("El pedido " + pedidoId + " no existe"));
