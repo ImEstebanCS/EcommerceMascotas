@@ -90,7 +90,8 @@ public class Pedido {
     }
 
     /**
-     * Recibe las publicaciones de las lineas para revisar el stock antes de confirmar.
+     * Recibe las publicaciones de las lineas para revisar, antes de confirmar,
+     * que cada una siga aceptando pedidos y que su stock alcance.
      */
     public void confirmar(List<Publicacion> publicaciones) {
         if (estado != EstadoPedido.BORRADOR) {
@@ -104,6 +105,10 @@ public class Pedido {
                     .filter(p -> p.getId().equals(linea.getPublicacionId()))
                     .findFirst()
                     .orElseThrow(() -> new ReglaDominioException("Falta la publicacion de una linea del pedido"));
+            // la publicacion pudo ser retirada o quedar agotada mientras el pedido estaba en borrador
+            if (!publicacion.aceptaPedidos()) {
+                throw new ReglaDominioException("La publicacion " + publicacion.getNombreProducto() + " ya no acepta pedidos");
+            }
             validarStock(publicacion, linea.getCantidad());
         }
         estado = EstadoPedido.CONFIRMADO;
