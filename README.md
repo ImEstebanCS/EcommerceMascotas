@@ -25,7 +25,8 @@ ecommerce/src/main/java/com/uniquindio/ecommerce
 │   ├── dto
 │   │   ├── request   → CrearPublicacionRequest, CrearPedidoRequest
 │   │   └── response  → PedidoResponse
-│   └── usecase       → CrearPublicacionUseCase, CrearPedidoUseCase, ConfirmarPedidoUseCase
+│   └── usecase       → vendedor: CrearPublicacionUseCase, ActualizarStockPublicacionUseCase, RetirarPublicacionUseCase
+│                       comprador: CrearPedidoUseCase, ConfirmarPedidoUseCase, CancelarPedidoUseCase
 └── infrastructure
     └── persistence   → PedidoRepositoryEnMemoria, PublicacionRepositoryEnMemoria
 ```
