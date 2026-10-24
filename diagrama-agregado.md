@@ -1,12 +1,14 @@
-# Invariantes del agregado PedidoMascotas
+# Invariantes del agregado Pedido
 
-1. Un pedido confirmado siempre debe contener al menos un producto.
-2. Todos los productos del pedido siempre deben estar destinados exclusivamente a perros o gatos.
-3. La cantidad de cada producto siempre debe ser mayor que cero y no puede superar el stock disponible.
-4. El total del pedido siempre debe ser igual a la suma de los subtotales de sus productos.
-5. Un pedido enviado, entregado o cancelado nunca puede modificar sus productos ni sus cantidades.
+1. Un pedido confirmado siempre debe contener al menos una línea de pedido.
+2. Todas las líneas del pedido siempre deben ser de publicaciones para perros o gatos.
+3. La cantidad de cada línea siempre debe ser mayor que cero y no puede superar el stock disponible de su publicación.
+4. El total del pedido siempre debe ser igual a la suma de los subtotales de sus líneas.
+5. Un pedido enviado, entregado o cancelado nunca puede modificar sus líneas ni sus cantidades.
 
-En código el agregado se llama [Pedido](ecommerce/src/main/java/com/uniquindio/ecommerce/domain/entity/Pedido.java) y cada producto del pedido es una [LineaPedido](ecommerce/src/main/java/com/uniquindio/ecommerce/domain/entity/LineaPedido.java).
+Al confirmar, el pedido vuelve a revisar que cada publicación siga aceptando pedidos (no retirada ni agotada) y que su stock alcance.
+
+En código el agregado se llama [Pedido](ecommerce/src/main/java/com/uniquindio/ecommerce/domain/entity/Pedido.java) y cada línea de pedido es una [LineaPedido](ecommerce/src/main/java/com/uniquindio/ecommerce/domain/entity/LineaPedido.java).
 
 ## Diagrama del agregado Pedido
 
