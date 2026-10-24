@@ -57,6 +57,24 @@ El paquete `domain` no depende de Spring, JPA ni Lombok. Los repositorios son in
 - [Casos de uso](casos-de-uso.md)
 - [DTOs](dtos.md)
 
+## Cómo ejecutar el proyecto
+
+Requisitos: Java 21. Desde la carpeta `ecommerce`:
+
+```bash
+./gradlew bootRun
+```
+
+En Windows: `gradlew.bat bootRun`. Con la aplicación corriendo:
+
+| Qué | Dirección |
+|---|---|
+| Swagger (probar la API) | http://localhost:8080/swagger-ui.html |
+| Documentación OpenAPI en JSON | http://localhost:8080/api-docs |
+| Consola de la base de datos H2 | http://localhost:8080/h2-console (JDBC URL: `jdbc:h2:mem:ecommercedb`, usuario `sa`, sin contraseña) |
+
+Errores de la API: 400 datos inválidos, 404 el recurso no existe, 409 se rompió una regla de negocio. Todos responden un JSON con `status`, `error` y `mensaje`.
+
 ## Cómo correr las pruebas
 
 Desde la carpeta `ecommerce`:
