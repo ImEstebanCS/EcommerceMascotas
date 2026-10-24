@@ -24,6 +24,10 @@ public record Stock(int unidades) {
         return new Stock(unidades - cantidad.valor());
     }
 
+    public Stock reponer(Cantidad cantidad) {
+        return new Stock(unidades + cantidad.valor());
+    }
+
     public boolean estaAgotado() {
         return unidades == 0;
     }

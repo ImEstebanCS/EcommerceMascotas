@@ -98,6 +98,18 @@ public class Publicacion {
         }
     }
 
+    /**
+     * Devuelve unidades al stock, por ejemplo cuando se cancela un pedido que ya las habia descontado.
+     * Una publicacion AGOTADA vuelve a PUBLICADA. Una RETIRADA recupera las unidades pero sigue
+     * retirada, porque RETIRADA es un estado final.
+     */
+    public void devolverStock(Cantidad cantidad) {
+        stock = stock.reponer(cantidad);
+        if (estado == EstadoPublicacion.AGOTADA) {
+            estado = EstadoPublicacion.PUBLICADA;
+        }
+    }
+
     public void retirar() {
         if (estado == EstadoPublicacion.RETIRADA) {
             throw new ReglaDominioException("La publicacion ya esta retirada");

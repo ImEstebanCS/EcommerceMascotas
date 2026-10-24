@@ -71,4 +71,19 @@ class PublicacionTest {
         assertEquals(0, pelota.getStock().unidades());
         assertEquals(EstadoPublicacion.AGOTADA, pelota.getEstado());
     }
+
+    @Test
+    void devolverStockAUnaPublicacionAgotadaLaVuelveAPublicar() {
+        // Arrange: una pelota publicada que se agoto
+        Publicacion pelota = crearPublicacion(PublicacionId.nuevo(), "Pelota de caucho", 1);
+        pelota.publicar();
+        pelota.descontarStock(new Cantidad(1));
+
+        // Act
+        pelota.devolverStock(new Cantidad(1));
+
+        // Assert
+        assertEquals(1, pelota.getStock().unidades());
+        assertEquals(EstadoPublicacion.PUBLICADA, pelota.getEstado());
+    }
 }
