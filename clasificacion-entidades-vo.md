@@ -10,9 +10,9 @@ Para decidir usamos tres pruebas:
 
 | Concepto | Identidad | Reemplazo | Ciclo de vida | Código |
 |---|---|---|---|---|
-| **Pedido** | Dos pedidos del mismo comprador con los mismos productos son pedidos distintos; se reconocen por `PedidoId`. | No: si lo reemplazo pierdo el pedido que el comprador está siguiendo. | BORRADOR → CONFIRMADO → ENVIADO → ENTREGADO (o CANCELADO). | [Pedido.java](ecommerce/src/main/java/com/uniquindio/ecommerce/domain/pedido/Pedido.java) |
-| **LineaPedido** | Tiene id propio; dos líneas iguales en dos pedidos distintos no son la misma. | No: el pedido modifica o quita una línea concreta. | Su cantidad y subtotal cambian mientras el pedido está en borrador. | [LineaPedido.java](ecommerce/src/main/java/com/uniquindio/ecommerce/domain/pedido/LineaPedido.java) |
-| **Publicacion** | Dos anuncios del mismo producto y precio siguen siendo publicaciones distintas (`PublicacionId`). | No: los pedidos apuntan a esa publicación en particular. | BORRADOR → PUBLICADA → AGOTADA / RETIRADA, y su stock cambia. | [Publicacion.java](ecommerce/src/main/java/com/uniquindio/ecommerce/domain/publicacion/Publicacion.java) |
+| **Pedido** | Dos pedidos del mismo comprador con los mismos productos son pedidos distintos; se reconocen por `PedidoId`. | No: si lo reemplazo pierdo el pedido que el comprador está siguiendo. | BORRADOR → CONFIRMADO → ENVIADO → ENTREGADO (o CANCELADO). | [Pedido.java](ecommerce/src/main/java/com/uniquindio/ecommerce/domain/entity/Pedido.java) |
+| **LineaPedido** | Tiene id propio; dos líneas iguales en dos pedidos distintos no son la misma. | No: el pedido modifica o quita una línea concreta. | Su cantidad y subtotal cambian mientras el pedido está en borrador. | [LineaPedido.java](ecommerce/src/main/java/com/uniquindio/ecommerce/domain/entity/LineaPedido.java) |
+| **Publicacion** | Dos anuncios del mismo producto y precio siguen siendo publicaciones distintas (`PublicacionId`). | No: los pedidos apuntan a esa publicación en particular. | BORRADOR → PUBLICADA → AGOTADA / RETIRADA, y su stock cambia. | [Publicacion.java](ecommerce/src/main/java/com/uniquindio/ecommerce/domain/entity/Publicacion.java) |
 
 Por eso las tres tienen constructor privado, factory estático, no tienen setters y su `equals`/`hashCode` solo compara el id.
 

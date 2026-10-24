@@ -6,7 +6,7 @@
 4. El total del pedido siempre debe ser igual a la suma de los subtotales de sus productos.
 5. Un pedido enviado, entregado o cancelado nunca puede modificar sus productos ni sus cantidades.
 
-En código el agregado se llama [Pedido](ecommerce/src/main/java/com/uniquindio/ecommerce/domain/pedido/Pedido.java) y cada producto del pedido es una [LineaPedido](ecommerce/src/main/java/com/uniquindio/ecommerce/domain/pedido/LineaPedido.java).
+En código el agregado se llama [Pedido](ecommerce/src/main/java/com/uniquindio/ecommerce/domain/entity/Pedido.java) y cada producto del pedido es una [LineaPedido](ecommerce/src/main/java/com/uniquindio/ecommerce/domain/entity/LineaPedido.java).
 
 ## Diagrama del agregado Pedido
 
@@ -39,4 +39,4 @@ flowchart LR
 3. Una publicación PUBLICADA debe tener stock de al menos 1; si el stock llega a 0 pasa a AGOTADA.
 4. Una publicación RETIRADA es un estado final: no vuelve a PUBLICADA ni acepta pedidos.
 
-Se protegen en [Publicacion.java](ecommerce/src/main/java/com/uniquindio/ecommerce/domain/publicacion/Publicacion.java).
+Se protegen en [Publicacion.java](ecommerce/src/main/java/com/uniquindio/ecommerce/domain/entity/Publicacion.java).
