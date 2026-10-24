@@ -1,8 +1,8 @@
 package com.uniquindio.ecommerce.infrastructure.persistence;
 
-import com.uniquindio.ecommerce.domain.pedido.Pedido;
-import com.uniquindio.ecommerce.domain.pedido.PedidoRepository;
-import com.uniquindio.ecommerce.domain.shared.PedidoId;
+import com.uniquindio.ecommerce.domain.entity.Pedido;
+import com.uniquindio.ecommerce.domain.repository.PedidoRepository;
+import com.uniquindio.ecommerce.domain.valueobject.PedidoId;
 
 import java.util.ArrayList;
 import java.util.HashMap;
