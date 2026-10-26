@@ -8,7 +8,7 @@ Marketplace de productos para **perros y gatos**. Los **vendedores** publican pr
 
 | Término | Significado en el nicho | Dónde vive en el código |
 |---|---|---|
-| **Publicación** | Anuncio de un producto que un vendedor pone a la venta, con precio, stock y especie destino. | [Publicacion.java](ecommerce/src/main/java/com/uniquindio/ecommerce/domain/entity/Publicacion.java) |
+| **Publicación** | Anuncio de un producto que un vendedor pone a la venta, con descripción, precio, stock y especie destino. | [Publicacion.java](ecommerce/src/main/java/com/uniquindio/ecommerce/domain/entity/Publicacion.java) |
 | **Especie destino** | Especie a la que está dirigido el producto: PERRO o GATO. Es la regla dura del nicho. | [EspecieDestino.java](ecommerce/src/main/java/com/uniquindio/ecommerce/domain/valueobject/EspecieDestino.java) |
 | **Pedido** | Solicitud de compra de una o más publicaciones hecha por un comprador. | [Pedido.java](ecommerce/src/main/java/com/uniquindio/ecommerce/domain/entity/Pedido.java) |
 | **Línea de pedido** | Cada ítem dentro de un pedido: publicación + cantidad + subtotal. | [LineaPedido.java](ecommerce/src/main/java/com/uniquindio/ecommerce/domain/entity/LineaPedido.java) |

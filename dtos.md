@@ -10,6 +10,7 @@ Entrada del caso de uso **CrearPublicacion**. [Ver código](ecommerce/src/main/j
 |---|---|---|
 | `vendedorId` | `UUID` | Saber qué vendedor es dueño de la publicación. |
 | `nombreProducto` | `String` | Lo que ve el comprador en el anuncio. |
+| `descripcion` | `String` | Obligatoria: explica el producto al comprador (material, tamaño, para qué sirve). No puede venir vacía ni superar 500 caracteres. |
 | `especieDestino` | `String` | Regla 1: solo PERRO o GATO. Se convierte con `EspecieDestino.desde(...)`. |
 | `montoPrecio` | `BigDecimal` | Regla 2: precio mayor a cero. |
 | `moneda` | `String` | Junto con el monto forma el value object `Dinero`. |
