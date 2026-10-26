@@ -5,8 +5,6 @@ import com.uniquindio.ecommerce.domain.repository.PublicacionRepository;
 import com.uniquindio.ecommerce.domain.valueobject.EspecieDestino;
 import com.uniquindio.ecommerce.domain.valueobject.PublicacionId;
 
-import org.springframework.stereotype.Repository;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,12 +12,9 @@ import java.util.Optional;
 
 /**
  * Implementacion en memoria del repositorio de publicaciones usando un HashMap.
- *
- * TEMPORAL: es el bean que usan los casos de uso hasta que exista PublicacionRepositoryJpa.
- * Cuando llegue la persistencia con JPA hay que quitarle @Repository (si no, Spring
- * encuentra dos implementaciones) y dejar esta clase solo para las pruebas.
+ * La aplicacion usa PublicacionRepositoryJpa; esta clase queda para pruebas sin base de datos
+ * (por eso no lleva @Repository: si lo tuviera, Spring encontraria dos implementaciones).
  */
-@Repository
 public class PublicacionRepositoryEnMemoria implements PublicacionRepository {
 
     private final Map<PublicacionId, Publicacion> publicaciones = new HashMap<>();

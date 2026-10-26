@@ -77,6 +77,19 @@ public class Publicacion {
         return new Publicacion(id, vendedorId, nombreProducto, descripcion, especieDestino, precio, stock, categoria);
     }
 
+    /**
+     * Solo para el adaptador de persistencia: "revive" una publicacion que YA existia.
+     * No vuelve a validar: esos datos ya pasaron por crear(...) cuando la publicacion nacio.
+     */
+    public static Publicacion reconstruir(PublicacionId id, VendedorId vendedorId, String nombreProducto,
+                                          String descripcion, EspecieDestino especieDestino, Dinero precio,
+                                          Stock stock, CategoriaProducto categoria, EstadoPublicacion estado) {
+        Publicacion publicacion = new Publicacion(id, vendedorId, nombreProducto, descripcion,
+                especieDestino, precio, stock, categoria);
+        publicacion.estado = estado;
+        return publicacion;
+    }
+
     public void publicar() {
         if (estado == EstadoPublicacion.RETIRADA) {
             throw new ReglaDominioException("Una publicacion retirada no puede volver a publicarse");

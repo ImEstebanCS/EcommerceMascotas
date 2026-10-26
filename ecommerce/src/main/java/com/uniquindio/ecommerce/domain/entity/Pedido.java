@@ -47,6 +47,20 @@ public class Pedido {
         return new Pedido(id, compradorId);
     }
 
+    /**
+     * Solo para el adaptador de persistencia: "revive" un pedido que YA existia.
+     * No vuelve a validar las reglas de creacion (ya se cumplieron cuando nacio), pero el total
+     * se recalcula a partir de las lineas para que la invariante 4 siga valiendo.
+     */
+    public static Pedido reconstruir(PedidoId id, CompradorId compradorId, List<LineaPedido> lineas,
+                                     EstadoPedido estado) {
+        Pedido pedido = new Pedido(id, compradorId);
+        pedido.lineas.addAll(lineas);
+        pedido.estado = estado;
+        pedido.recalcularTotal();
+        return pedido;
+    }
+
     public void agregarLinea(Publicacion publicacion, Cantidad cantidad) {
         validarQueSePuedeModificar();
         if (!publicacion.aceptaPedidos()) {
