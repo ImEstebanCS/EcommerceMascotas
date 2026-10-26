@@ -1,9 +1,5 @@
 package com.uniquindio.ecommerce.application.dto.request;
 
-import com.uniquindio.ecommerce.domain.valueobject.Cantidad;
-import com.uniquindio.ecommerce.domain.valueobject.CompradorId;
-import com.uniquindio.ecommerce.domain.valueobject.PublicacionId;
-
 import java.util.List;
 import java.util.UUID;
 

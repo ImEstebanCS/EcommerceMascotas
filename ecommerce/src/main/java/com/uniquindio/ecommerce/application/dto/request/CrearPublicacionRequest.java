@@ -1,8 +1,5 @@
 package com.uniquindio.ecommerce.application.dto.request;
 
-import com.uniquindio.ecommerce.domain.valueobject.EspecieDestino;
-import com.uniquindio.ecommerce.domain.valueobject.VendedorId;
-
 import java.math.BigDecimal;
 import java.util.UUID;
 
@@ -12,6 +9,7 @@ import java.util.UUID;
 public record CrearPublicacionRequest(
         UUID vendedorId,
         String nombreProducto,
+        String descripcion,
         String especieDestino,
         BigDecimal montoPrecio,
         String moneda,

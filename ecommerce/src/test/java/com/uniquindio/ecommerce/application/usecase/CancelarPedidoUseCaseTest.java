@@ -49,7 +49,7 @@ class CancelarPedidoUseCaseTest {
 
     private Publicacion rascadorPublicado(int stock) {
         Publicacion rascador = Publicacion.crear(PublicacionId.nuevo(), VendedorId.nuevo(), "Rascador de carton",
-                EspecieDestino.GATO, new Dinero(new BigDecimal("35000"), "COP"), new Stock(stock), CategoriaProducto.JUGUETE);
+                "Rascador de carton corrugado con catnip", EspecieDestino.GATO, new Dinero(new BigDecimal("35000"), "COP"), new Stock(stock), CategoriaProducto.JUGUETE);
         rascador.publicar();
         return rascador;
     }

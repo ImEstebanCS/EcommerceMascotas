@@ -2,9 +2,6 @@ package com.uniquindio.ecommerce.application.dto.response;
 
 import com.uniquindio.ecommerce.domain.entity.LineaPedido;
 import com.uniquindio.ecommerce.domain.entity.Pedido;
-import com.uniquindio.ecommerce.domain.valueobject.Cantidad;
-import com.uniquindio.ecommerce.domain.valueobject.PedidoId;
-import com.uniquindio.ecommerce.domain.valueobject.PublicacionId;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;

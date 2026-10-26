@@ -24,7 +24,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class PedidoTest {
 
     private Publicacion publicacionPublicada(String nombre, EspecieDestino especie, String precio, int stock) {
-        Publicacion publicacion = Publicacion.crear(PublicacionId.nuevo(), VendedorId.nuevo(), nombre, especie,
+        Publicacion publicacion = Publicacion.crear(PublicacionId.nuevo(), VendedorId.nuevo(), nombre,
+                "Descripcion de " + nombre, especie,
                 new Dinero(new BigDecimal(precio), "COP"), new Stock(stock), CategoriaProducto.ACCESORIO);
         publicacion.publicar();
         return publicacion;

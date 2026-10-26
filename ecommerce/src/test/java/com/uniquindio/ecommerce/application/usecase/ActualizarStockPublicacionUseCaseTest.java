@@ -40,7 +40,7 @@ class ActualizarStockPublicacionUseCaseTest {
 
     private Publicacion comederoPublicado(int stock) {
         Publicacion comedero = Publicacion.crear(PublicacionId.nuevo(), VendedorId.nuevo(), "Comedero doble",
-                EspecieDestino.PERRO, new Dinero(new BigDecimal("25000"), "COP"), new Stock(stock), CategoriaProducto.ACCESORIO);
+                "Comedero de acero inoxidable con dos platos", EspecieDestino.PERRO, new Dinero(new BigDecimal("25000"), "COP"), new Stock(stock), CategoriaProducto.ACCESORIO);
         comedero.publicar();
         return comedero;
     }
