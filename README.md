@@ -28,11 +28,24 @@ ecommerce/src/main/java/com/uniquindio/ecommerce
 │   └── usecase       → vendedor: CrearPublicacionUseCase, ActualizarStockPublicacionUseCase, RetirarPublicacionUseCase
 │                       comprador: CrearPedidoUseCase, ConfirmarPedidoUseCase, CancelarPedidoUseCase
 └── infrastructure
-    └── persistence   → PedidoRepositoryEnMemoria, PublicacionRepositoryEnMemoria
+    ├── config        → OpenApiConfig (Swagger)
+    ├── persistence   → PedidoRepositoryEnMemoria, PublicacionRepositoryEnMemoria (solo para pruebas)
+    │   └── jpa       → PedidoRepositoryJpa, PublicacionRepositoryJpa (+ sus repositorios de Spring Data)
+    │       ├── entity → PedidoEntity, LineaPedidoEntity, PublicacionEntity, DineroEmbeddable
+    │       └── mapper → PedidoPersistenceMapper, PublicacionPersistenceMapper
+    └── rest
+        └── exception → GlobalExceptionHandler
 ```
 
 Las clases se organizan **por tipo** (entidades, value objects, repositorios, excepción, casos de uso, DTOs), siguiendo el repositorio guía del curso.
-El paquete `domain` no depende de Spring, JPA ni Lombok. Los repositorios son interfaces en el dominio y su implementación (con `HashMap`) está en infraestructura.
+El paquete `domain` no depende de Spring, JPA ni Lombok. Los repositorios son interfaces en el dominio; la aplicación usa su implementación con JPA (`…RepositoryJpa`) y las versiones en memoria quedan para pruebas.
+
+## Persistencia
+
+- Base de datos H2 en memoria; las tablas se crean al arrancar: `publicaciones`, `pedidos` y `lineas_pedido`.
+- Las entidades JPA (`infrastructure/persistence/jpa/entity`) son clases distintas de las entidades del dominio; un mapper convierte entre ellas usando `reconstruir(...)` del dominio.
+- `data.sql` carga datos de prueba: 10 publicaciones de perro y gato (una AGOTADA y una RETIRADA) y 7 pedidos en distintos estados.
+- Retirar una publicación no borra la fila: queda en estado RETIRADA (eliminación lógica).
 
 ## Correcciones de la Entrega 1
 
