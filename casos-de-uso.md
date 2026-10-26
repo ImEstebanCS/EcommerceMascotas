@@ -18,7 +18,7 @@ Implementados: 6 (3 del vendedor y 3 del comprador). Documentados: 2 (AgregarLin
 ## Detalle
 
 ### 1. CrearPublicacion (vendedor)
-Recibe un [CrearPublicacionRequest](dtos.md#crearpublicacionrequest), crea la `Publicacion`, la publica y la guarda. Falla si la especie no es PERRO o GATO, si el precio no es mayor a cero o si el stock inicial es 0.
+Recibe un [CrearPublicacionRequest](dtos.md#crearpublicacionrequest), crea la `Publicacion`, la publica y la guarda. Falla si falta la descripción, si la especie no es PERRO o GATO, si el precio no es mayor a cero o si el stock inicial es 0.
 
 ### 2. ActualizarStockPublicacion (vendedor)
 Busca la publicación, llama a `actualizarStock(nuevoStock)` y la guarda. Si el stock queda en 0 pasa a AGOTADA; si una AGOTADA recibe stock vuelve a PUBLICADA. No aplica a publicaciones retiradas. Si la publicación no existe lanza `NoSuchElementException`.
