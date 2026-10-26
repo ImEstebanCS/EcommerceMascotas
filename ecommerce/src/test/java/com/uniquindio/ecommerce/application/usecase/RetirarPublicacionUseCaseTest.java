@@ -42,7 +42,7 @@ class RetirarPublicacionUseCaseTest {
     void retirarUnaPublicacionLaDejaRetiradaYLaGuarda() {
         // Arrange
         Publicacion arena = Publicacion.crear(PublicacionId.nuevo(), VendedorId.nuevo(), "Arena para gato",
-                EspecieDestino.GATO, new Dinero(new BigDecimal("30000"), "COP"), new Stock(4), CategoriaProducto.HIGIENE);
+                "Arena aglomerante de 4 kg", EspecieDestino.GATO, new Dinero(new BigDecimal("30000"), "COP"), new Stock(4), CategoriaProducto.HIGIENE);
         arena.publicar();
         when(publicacionRepository.buscarPorId(arena.getId())).thenReturn(Optional.of(arena));
 
