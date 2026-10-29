@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.NoSuchElementException;
-import java.util.UUID;
 
 /**
  * Caso de uso del vendedor: retirar una publicacion. Desde ese momento no recibe pedidos
@@ -23,11 +22,12 @@ public class RetirarPublicacionUseCase {
     private final PublicacionRepository publicacionRepository;
 
     @Transactional
-    public void ejecutar(UUID publicacionId) {
-        Publicacion publicacion = publicacionRepository.buscarPorId(new PublicacionId(publicacionId))
-                .orElseThrow(() -> new NoSuchElementException("La publicacion " + publicacionId + " no existe"));
+    public Publicacion ejecutar(PublicacionId publicacionId) {
+        Publicacion publicacion = publicacionRepository.buscarPorId(publicacionId)
+                .orElseThrow(() -> new NoSuchElementException("La publicacion " + publicacionId.valor() + " no existe"));
 
         publicacion.retirar();
         publicacionRepository.guardar(publicacion);
+        return publicacion;
     }
 }

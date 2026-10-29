@@ -10,10 +10,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.NoSuchElementException;
-import java.util.UUID;
 
 /**
  * Caso de uso del vendedor: cambiar el stock de una publicacion (reponer o corregir unidades).
+ * Devuelve la Publicacion del dominio; la API la convierte en su DTO de respuesta.
  * Repository: PublicacionRepository.
  */
 @Service
@@ -23,11 +23,12 @@ public class ActualizarStockPublicacionUseCase {
     private final PublicacionRepository publicacionRepository;
 
     @Transactional
-    public void ejecutar(UUID publicacionId, int nuevoStock) {
-        Publicacion publicacion = publicacionRepository.buscarPorId(new PublicacionId(publicacionId))
-                .orElseThrow(() -> new NoSuchElementException("La publicacion " + publicacionId + " no existe"));
+    public Publicacion ejecutar(PublicacionId publicacionId, Stock nuevoStock) {
+        Publicacion publicacion = publicacionRepository.buscarPorId(publicacionId)
+                .orElseThrow(() -> new NoSuchElementException("La publicacion " + publicacionId.valor() + " no existe"));
 
-        publicacion.actualizarStock(new Stock(nuevoStock));
+        publicacion.actualizarStock(nuevoStock);
         publicacionRepository.guardar(publicacion);
+        return publicacion;
     }
 }
