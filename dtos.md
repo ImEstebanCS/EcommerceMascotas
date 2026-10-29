@@ -19,28 +19,32 @@ Entrada del caso de uso **CrearPublicacion**. [Ver código](ecommerce/src/main/j
 
 ## CrearPedidoRequest
 
-Entrada del caso de uso **CrearPedido**. [Ver código](ecommerce/src/main/java/com/uniquindio/ecommerce/application/dto/request/CrearPedidoRequest.java)
+Body de `POST /api/pedidos` (caso de uso **CrearPedido**). [Ver código](ecommerce/src/main/java/com/uniquindio/ecommerce/application/dto/request/CrearPedidoRequest.java)
 
-| Campo | Tipo | Por qué es necesario |
-|---|---|---|
-| `compradorId` | `UUID` | Saber quién hace el pedido. |
-| `lineas` | `List<LineaPedidoRequest>` | Los productos que se piden; un pedido confirmado necesita al menos uno. |
-| `lineas[].publicacionId` | `UUID` | Para buscar la publicación y tomar su precio, especie y stock. |
-| `lineas[].cantidad` | `int` | Unidades pedidas; debe ser mayor a cero y no superar el stock. |
+| Campo | Tipo | Validación (400 si falla) | Por qué es necesario |
+|---|---|---|---|
+| `compradorId` | `UUID` | `@NotNull` | Saber quién hace el pedido. |
+| `lineas` | `List<LineaPedidoRequest>` | `@NotEmpty` | Los productos que se piden; un pedido sin líneas no se puede confirmar. |
+| `lineas[].publicacionId` | `UUID` | `@NotNull` | Para buscar la publicación y tomar su precio, especie y stock. |
+| `lineas[].cantidad` | `int` | `@Min(1)` | Unidades pedidas. Que no superen el stock lo revisa el dominio (409). |
 
 El precio no viene en el request a propósito: lo toma el dominio de la publicación, así el comprador no puede mandar un precio inventado.
 
+El caso de uso no recibe este DTO: `PedidoMapper` lo convierte en `CompradorId` y una lista de `LineaSolicitada(PublicacionId, Cantidad)`.
+
 ## PedidoResponse
 
-Salida del caso de uso **ConfirmarPedido**. [Ver código](ecommerce/src/main/java/com/uniquindio/ecommerce/application/dto/response/PedidoResponse.java)
+Respuesta de todos los endpoints de pedidos (crear, confirmar, cancelar y consultar). La arma `PedidoMapper` a partir del `Pedido` del dominio. [Ver código](ecommerce/src/main/java/com/uniquindio/ecommerce/application/dto/response/PedidoResponse.java)
 
 | Campo | Tipo | Por qué es necesario |
 |---|---|---|
-| `pedidoId` | `UUID` | Para que el comprador pueda consultar el pedido después. |
-| `estado` | `String` | Confirma que el pedido quedó CONFIRMADO. |
+| `pedidoId` | `UUID` | Para que el comprador pueda consultar, confirmar o cancelar el pedido después. |
+| `compradorId` | `UUID` | De quién es el pedido. |
+| `estado` | `String` | En qué va el pedido: BORRADOR, CONFIRMADO, ENVIADO, ENTREGADO o CANCELADO. |
 | `montoTotal` | `BigDecimal` | Lo que el comprador va a pagar (suma de subtotales). |
 | `moneda` | `String` | Para mostrar el total correctamente. |
-| `lineas` | `List<LineaResponse>` | Resumen de lo que se confirmó. |
-| `lineas[].publicacionId` | `UUID` | Qué publicación se compró. |
+| `lineas` | `List<LineaResponse>` | Lo que tiene el pedido. |
+| `lineas[].publicacionId` | `UUID` | Qué publicación se pidió. |
 | `lineas[].cantidad` | `int` | Cuántas unidades. |
+| `lineas[].precioUnitario` | `BigDecimal` | El precio que tenía la publicación cuando se agregó al pedido. |
 | `lineas[].subtotal` | `BigDecimal` | Precio unitario por cantidad de esa línea. |
