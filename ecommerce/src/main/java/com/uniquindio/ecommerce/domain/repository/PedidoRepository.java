@@ -1,6 +1,7 @@
 package com.uniquindio.ecommerce.domain.repository;
 
 import com.uniquindio.ecommerce.domain.entity.Pedido;
+import com.uniquindio.ecommerce.domain.valueobject.CompradorId;
 import com.uniquindio.ecommerce.domain.valueobject.PedidoId;
 
 import java.util.List;
@@ -16,4 +17,6 @@ public interface PedidoRepository {
     Optional<Pedido> buscarPorId(PedidoId id);
 
     List<Pedido> listar();
+
+    List<Pedido> buscarPorComprador(CompradorId compradorId);
 }
