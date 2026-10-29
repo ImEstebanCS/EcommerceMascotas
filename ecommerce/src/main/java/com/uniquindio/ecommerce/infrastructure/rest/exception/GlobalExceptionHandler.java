@@ -39,6 +39,12 @@ public class GlobalExceptionHandler {
         return construirRespuesta(HttpStatus.NOT_FOUND, mensaje, null); // 404
     }
 
+    /** Una entrada que valida el caso de uso no es valida (pagina negativa, tamano fuera de rango...). */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> manejarEntradaInvalida(IllegalArgumentException ex) {
+        return construirRespuesta(HttpStatus.BAD_REQUEST, ex.getMessage(), null); // 400
+    }
+
     /** Un campo del body no cumple su validacion (@NotBlank, @Positive...). */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> manejarBodyInvalido(MethodArgumentNotValidException ex) {
