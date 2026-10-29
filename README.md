@@ -23,7 +23,7 @@ ecommerce/src/main/java/com/uniquindio/ecommerce
 │   └── exception     → ReglaDominioException
 ├── application
 │   ├── dto
-│   │   ├── request   → CrearPublicacionRequest, CrearPedidoRequest
+│   │   ├── request   → CrearPublicacionRequest, ActualizarStockRequest, CrearPedidoRequest
 │   │   └── response  → PedidoResponse, PublicacionResponse, PageResponse, MasVendidaResponse
 │   └── usecase       → vendedor: CrearPublicacionUseCase, ActualizarStockPublicacionUseCase, RetirarPublicacionUseCase
 │                       comprador: CrearPedidoUseCase, ConfirmarPedidoUseCase, CancelarPedidoUseCase
@@ -34,8 +34,8 @@ ecommerce/src/main/java/com/uniquindio/ecommerce
     │   └── jpa       → PedidoRepositoryJpa, PublicacionRepositoryJpa (+ sus repositorios de Spring Data)
     │       ├── entity → PedidoEntity, LineaPedidoEntity, PublicacionEntity, DineroEmbeddable
     │       └── mapper → PedidoPersistenceMapper, PublicacionPersistenceMapper
-    └── rest          → ConsultasPublicacionController, PedidoController, ConsultasPedidoController
-        ├── mapper    → PedidoMapper (DTO ↔ dominio)
+    └── rest          → PublicacionController, ConsultasPublicacionController, PedidoController, ConsultasPedidoController
+        ├── mapper    → PublicacionMapper, PedidoMapper (DTO ↔ dominio)
         └── exception → GlobalExceptionHandler
 ```
 
@@ -48,6 +48,17 @@ El paquete `domain` no depende de Spring, JPA ni Lombok. Los repositorios son in
 - Las entidades JPA (`infrastructure/persistence/jpa/entity`) son clases distintas de las entidades del dominio; un mapper convierte entre ellas usando `reconstruir(...)` del dominio.
 - `data.sql` carga datos de prueba: 10 publicaciones de perro y gato (una AGOTADA y una RETIRADA) y 7 pedidos en distintos estados.
 - Retirar una publicación no borra la fila: queda en estado RETIRADA (eliminación lógica).
+
+## Publicaciones (vendedor)
+
+| Método | Ruta | Qué hace |
+|---|---|---|
+| POST | `/api/publicaciones` | Crea la publicación ya PUBLICADA. Responde 201 con la dirección de la publicación nueva |
+| PUT | `/api/publicaciones/{id}/stock` | Cambia el stock (body `{"stock": 5}`); con 0 queda AGOTADA y si estaba agotada vuelve a PUBLICADA |
+| DELETE | `/api/publicaciones/{id}` | Retira la publicación. Es una eliminación lógica: la fila no se borra, queda en estado RETIRADA y deja de salir en el catálogo |
+
+- **400** cuando la petición viene incompleta (falta el nombre, la descripción, el precio…): lo revisan las validaciones del DTO.
+- **409** cuando la petición está completa pero rompe una regla del negocio: especie distinta de PERRO o GATO, precio 0, descripción de más de 500 caracteres, stock negativo o retirar dos veces. Esas reglas viven en el dominio, no en el DTO.
 
 ## Consultas
 
@@ -98,7 +109,7 @@ Ejemplo para crear un pedido con los datos de prueba (2 rascadores para el compr
 | `confirmar()` solo revisaba el stock: si el vendedor retiraba una publicación mientras el pedido estaba en borrador, el error salía después, al descontar el stock | `Pedido.confirmar()` ahora revisa que cada publicación siga aceptando pedidos antes de pasar a CONFIRMADO; nueva prueba que lo demuestra | `domain/entity/Pedido.java`, `PedidoTest.confirmarConUnaPublicacionRetirada…` |
 | Cuando un pedido o una publicación no existía, el caso de uso lanzaba `ReglaDominioException`, igual que si se rompiera una regla | Ahora lanza `NoSuchElementException` (se podrá responder 404), y `ReglaDominioException` queda solo para reglas de negocio rotas | `application/usecase/CrearPedidoUseCase.java`, `ConfirmarPedidoUseCase.java` |
 | `diagrama-agregado.md` hablaba de "PedidoMascotas" y "productos", términos que no están en el lenguaje ubicuo | Se usa "Pedido" y "línea de pedido", igual que en el código | `diagrama-agregado.md` |
-| Los casos de uso de pedidos recibían un DTO (`CrearPedidoRequest`) o devolvían uno (`PedidoResponse`), y eso dejaba la capa de aplicación amarrada a la API | Ahora reciben tipos del dominio y devuelven el `Pedido`; el `PedidoMapper` de la API hace la conversión en los dos sentidos | `application/usecase/CrearPedidoUseCase.java`, `infrastructure/rest/mapper/PedidoMapper.java` |
+| Los casos de uso recibían un DTO (`CrearPedidoRequest`, `CrearPublicacionRequest`) o devolvían uno (`PedidoResponse`), y eso dejaba la capa de aplicación amarrada a la API | Ahora reciben tipos del dominio y devuelven la entidad (`Pedido`, `Publicacion`); `PedidoMapper` y `PublicacionMapper` hacen la conversión en los dos sentidos | `application/usecase/CrearPedidoUseCase.java`, `CrearPublicacionUseCase.java`, `infrastructure/rest/mapper/` |
 
 ## Documentación
 
