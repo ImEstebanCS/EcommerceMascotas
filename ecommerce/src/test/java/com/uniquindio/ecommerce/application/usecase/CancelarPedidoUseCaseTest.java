@@ -72,7 +72,7 @@ class CancelarPedidoUseCaseTest {
         when(publicacionRepository.buscarPorId(rascador.getId())).thenReturn(Optional.of(rascador));
 
         // Act
-        useCase.ejecutar(pedido.getId().valor());
+        useCase.ejecutar(pedido.getId());
 
         // Assert
         assertEquals(EstadoPedido.CANCELADO, pedido.getEstado());
@@ -91,7 +91,7 @@ class CancelarPedidoUseCaseTest {
         when(pedidoRepository.buscarPorId(pedido.getId())).thenReturn(Optional.of(pedido));
 
         // Act
-        Executable cancelar = () -> useCase.ejecutar(pedido.getId().valor());
+        Executable cancelar = () -> useCase.ejecutar(pedido.getId());
 
         // Assert
         assertThrows(ReglaDominioException.class, cancelar);

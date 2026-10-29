@@ -1,6 +1,5 @@
 package com.uniquindio.ecommerce.application.usecase;
 
-import com.uniquindio.ecommerce.application.dto.response.PedidoResponse;
 import com.uniquindio.ecommerce.domain.entity.LineaPedido;
 import com.uniquindio.ecommerce.domain.entity.Pedido;
 import com.uniquindio.ecommerce.domain.entity.Publicacion;
@@ -15,10 +14,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.UUID;
 
 /**
  * Caso de uso del comprador: confirmar un pedido y descontar el stock de sus publicaciones.
+ * Devuelve el Pedido del dominio; la API lo convierte en su DTO de respuesta.
  * Repositories: PedidoRepository y PublicacionRepository.
  */
 @Service
@@ -29,9 +28,9 @@ public class ConfirmarPedidoUseCase {
     private final PublicacionRepository publicacionRepository;
 
     @Transactional
-    public PedidoResponse ejecutar(UUID pedidoId) {
-        Pedido pedido = pedidoRepository.buscarPorId(new PedidoId(pedidoId))
-                .orElseThrow(() -> new NoSuchElementException("El pedido " + pedidoId + " no existe"));
+    public Pedido ejecutar(PedidoId pedidoId) {
+        Pedido pedido = pedidoRepository.buscarPorId(pedidoId)
+                .orElseThrow(() -> new NoSuchElementException("El pedido " + pedidoId.valor() + " no existe"));
 
         List<Publicacion> publicaciones = new ArrayList<>();
         for (LineaPedido linea : pedido.getLineas()) {
@@ -48,7 +47,6 @@ public class ConfirmarPedidoUseCase {
             publicacionRepository.guardar(publicacion);
         }
         pedidoRepository.guardar(pedido);
-
-        return PedidoResponse.desde(pedido);
+        return pedido;
     }
 }
