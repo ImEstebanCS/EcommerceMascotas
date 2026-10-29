@@ -2,6 +2,7 @@ package com.uniquindio.ecommerce.infrastructure.persistence.jpa;
 
 import com.uniquindio.ecommerce.domain.entity.Pedido;
 import com.uniquindio.ecommerce.domain.repository.PedidoRepository;
+import com.uniquindio.ecommerce.domain.valueobject.CompradorId;
 import com.uniquindio.ecommerce.domain.valueobject.PedidoId;
 import com.uniquindio.ecommerce.infrastructure.persistence.jpa.mapper.PedidoPersistenceMapper;
 
@@ -35,6 +36,13 @@ public class PedidoRepositoryJpa implements PedidoRepository {
     @Override
     public List<Pedido> listar() {
         return dataRepository.findAll().stream()
+                .map(mapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<Pedido> buscarPorComprador(CompradorId compradorId) {
+        return dataRepository.findByCompradorId(compradorId.valor()).stream()
                 .map(mapper::toDomain)
                 .toList();
     }
