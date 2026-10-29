@@ -13,11 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.UUID;
 
 /**
  * Caso de uso del comprador: cancelar un pedido y devolver a cada publicacion
- * las unidades que el pedido ya habia descontado.
+ * las unidades que el pedido ya habia descontado. Devuelve el Pedido cancelado.
  * Repositories: PedidoRepository y PublicacionRepository.
  */
 @Service
@@ -28,9 +27,9 @@ public class CancelarPedidoUseCase {
     private final PublicacionRepository publicacionRepository;
 
     @Transactional
-    public void ejecutar(UUID pedidoId) {
-        Pedido pedido = pedidoRepository.buscarPorId(new PedidoId(pedidoId))
-                .orElseThrow(() -> new NoSuchElementException("El pedido " + pedidoId + " no existe"));
+    public Pedido ejecutar(PedidoId pedidoId) {
+        Pedido pedido = pedidoRepository.buscarPorId(pedidoId)
+                .orElseThrow(() -> new NoSuchElementException("El pedido " + pedidoId.valor() + " no existe"));
 
         // el Pedido decide si hay stock que devolver (solo si ya estaba CONFIRMADO)
         List<LineaPedido> lineasAReponer = pedido.cancelar();
@@ -42,5 +41,6 @@ public class CancelarPedidoUseCase {
             publicacionRepository.guardar(publicacion);
         }
         pedidoRepository.guardar(pedido);
+        return pedido;
     }
 }
