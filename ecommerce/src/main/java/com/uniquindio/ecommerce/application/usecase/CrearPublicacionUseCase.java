@@ -1,6 +1,5 @@
 package com.uniquindio.ecommerce.application.usecase;
 
-import com.uniquindio.ecommerce.application.dto.request.CrearPublicacionRequest;
 import com.uniquindio.ecommerce.domain.entity.Publicacion;
 import com.uniquindio.ecommerce.domain.repository.PublicacionRepository;
 import com.uniquindio.ecommerce.domain.valueobject.CategoriaProducto;
@@ -16,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Caso de uso del vendedor: crear una publicacion y dejarla publicada.
+ * Recibe tipos del dominio, no el DTO: la conversion la hace el mapper de la API.
  * Repository: PublicacionRepository.
  */
 @Service
@@ -25,19 +25,25 @@ public class CrearPublicacionUseCase {
     private final PublicacionRepository publicacionRepository;
 
     @Transactional
-    public PublicacionId ejecutar(CrearPublicacionRequest request) {
+    public Publicacion ejecutar(NuevaPublicacion datos) {
         Publicacion publicacion = Publicacion.crear(
                 PublicacionId.nuevo(),
-                new VendedorId(request.vendedorId()),
-                request.nombreProducto(),
-                request.descripcion(),
-                EspecieDestino.desde(request.especieDestino()),
-                new Dinero(request.montoPrecio(), request.moneda()),
-                new Stock(request.stockInicial()),
-                CategoriaProducto.desde(request.categoria()));
+                datos.vendedorId(),
+                datos.nombreProducto(),
+                datos.descripcion(),
+                datos.especieDestino(),
+                datos.precio(),
+                datos.stockInicial(),
+                datos.categoria());
 
         publicacion.publicar();
         publicacionRepository.guardar(publicacion);
-        return publicacion.getId();
+        return publicacion;
+    }
+
+    /** Los datos de la publicacion nueva, ya convertidos a tipos del dominio. */
+    public record NuevaPublicacion(VendedorId vendedorId, String nombreProducto, String descripcion,
+                                   EspecieDestino especieDestino, Dinero precio, Stock stockInicial,
+                                   CategoriaProducto categoria) {
     }
 }
