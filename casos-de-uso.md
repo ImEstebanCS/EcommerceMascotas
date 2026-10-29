@@ -17,18 +17,18 @@ Implementados: 6 (3 del vendedor y 3 del comprador). Documentados: 2 (AgregarLin
 
 Además hay dos casos de uso de solo lectura: `ConsultarCatalogoUseCase` (catálogo, detalle y ranking de publicaciones) y `ConsultarPedidosUseCase` (pedidos de un comprador y detalle de un pedido).
 
-Los casos de uso de pedidos reciben tipos del dominio (`CompradorId`, `PedidoId`, `PublicacionId`, `Cantidad`) y devuelven el `Pedido`, no DTOs. El `PedidoMapper` de la API convierte el DTO en esos tipos antes de llamarlos, y el `Pedido` en `PedidoResponse` al responder.
+Los casos de uso reciben tipos del dominio (`VendedorId`, `CompradorId`, `PublicacionId`, `PedidoId`, `Stock`, `Cantidad`...) y devuelven la entidad (`Publicacion` o `Pedido`), no DTOs. Los mappers de la API (`PublicacionMapper` y `PedidoMapper`) convierten el DTO en esos tipos antes de llamarlos, y la entidad en el DTO de respuesta. Así la capa de aplicación no depende de HTTP.
 
 ## Detalle
 
 ### 1. CrearPublicacion (vendedor)
-Recibe un [CrearPublicacionRequest](dtos.md#crearpublicacionrequest), crea la `Publicacion`, la publica y la guarda. Falla si falta la descripción, si la especie no es PERRO o GATO, si el precio no es mayor a cero o si el stock inicial es 0.
+Recibe una `NuevaPublicacion` con tipos del dominio (el mapper la arma a partir del [CrearPublicacionRequest](dtos.md#crearpublicacionrequest)), crea la `Publicacion`, la publica, la guarda y la devuelve. Falla si falta la descripción, si la especie no es PERRO o GATO, si el precio no es mayor a cero o si el stock inicial es 0.
 
 ### 2. ActualizarStockPublicacion (vendedor)
-Busca la publicación, llama a `actualizarStock(nuevoStock)` y la guarda. Si el stock queda en 0 pasa a AGOTADA; si una AGOTADA recibe stock vuelve a PUBLICADA. No aplica a publicaciones retiradas. Si la publicación no existe lanza `NoSuchElementException`.
+Recibe el `PublicacionId` y el nuevo `Stock`, busca la publicación, llama a `actualizarStock(nuevoStock)`, la guarda y la devuelve. Si el stock queda en 0 pasa a AGOTADA; si una AGOTADA recibe stock vuelve a PUBLICADA. No aplica a publicaciones retiradas. Si la publicación no existe lanza `NoSuchElementException`.
 
 ### 3. RetirarPublicacion (vendedor)
-Busca la publicación, llama a `retirar()` y la guarda. Desde ese momento no recibe pedidos ni se puede volver a publicar. No se borra: queda en estado RETIRADA (eliminación lógica).
+Busca la publicación, llama a `retirar()`, la guarda y la devuelve. La API lo expone como `DELETE /api/publicaciones/{id}`. Desde ese momento no recibe pedidos ni se puede volver a publicar. No se borra: queda en estado RETIRADA (eliminación lógica).
 
 ### 4. CrearPedido (comprador)
 Recibe el `CompradorId` y las líneas pedidas como `LineaSolicitada(PublicacionId, Cantidad)`; el mapper las arma a partir del [CrearPedidoRequest](dtos.md#crearpedidorequest). Crea el `Pedido` en BORRADOR, por cada línea busca la publicación y llama a `agregarLinea(publicacion, cantidad)`, guarda el pedido y lo devuelve. Si se pide más de lo que hay en stock o la publicación no acepta pedidos, el dominio lanza `ReglaDominioException` y no se guarda nada.
