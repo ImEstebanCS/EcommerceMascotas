@@ -16,7 +16,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -61,8 +60,8 @@ class ConsultarCatalogoUseCaseTest {
     @Test
     void obtenerUnaPublicacionQueNoExisteLanzaNoSuchElementException() {
         // Arrange
-        UUID idQueNoExiste = UUID.randomUUID();
-        when(publicacionRepository.buscarPorId(new PublicacionId(idQueNoExiste))).thenReturn(Optional.empty());
+        PublicacionId idQueNoExiste = PublicacionId.nuevo();
+        when(publicacionRepository.buscarPorId(idQueNoExiste)).thenReturn(Optional.empty());
 
         // Act
         Executable obtener = () -> useCase.obtener(idQueNoExiste);

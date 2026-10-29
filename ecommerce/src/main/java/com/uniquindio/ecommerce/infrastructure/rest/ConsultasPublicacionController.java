@@ -6,6 +6,8 @@ import com.uniquindio.ecommerce.application.dto.response.PublicacionResponse;
 import com.uniquindio.ecommerce.application.usecase.ConsultarCatalogoUseCase;
 import com.uniquindio.ecommerce.domain.valueobject.CategoriaProducto;
 import com.uniquindio.ecommerce.domain.valueobject.EspecieDestino;
+import com.uniquindio.ecommerce.domain.valueobject.PublicacionId;
+import com.uniquindio.ecommerce.infrastructure.rest.mapper.PublicacionMapper;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -30,6 +32,7 @@ import java.util.UUID;
 public class ConsultasPublicacionController {
 
     private final ConsultarCatalogoUseCase consultarCatalogoUseCase;
+    private final PublicacionMapper mapper;
 
     /** Catalogo paginado: busqueda por texto en nombre o descripcion, y filtros por especie y categoria. */
     @GetMapping
@@ -43,7 +46,7 @@ public class ConsultasPublicacionController {
             @Max(value = 50, message = "El tamano de la pagina debe estar entre 1 y 50") int tamano) {
         return PageResponse.desde(
                 consultarCatalogoUseCase.buscar(texto, especie, categoria, pagina, tamano),
-                PublicacionResponse::desde);
+                mapper::toResponse);
     }
 
     /** Ranking de las publicaciones con mas unidades vendidas. */
@@ -60,6 +63,6 @@ public class ConsultasPublicacionController {
     /** Detalle de una publicacion; si no existe responde 404. */
     @GetMapping("/{id}")
     public PublicacionResponse obtener(@PathVariable("id") UUID id) {
-        return PublicacionResponse.desde(consultarCatalogoUseCase.obtener(id));
+        return mapper.toResponse(consultarCatalogoUseCase.obtener(new PublicacionId(id)));
     }
 }
