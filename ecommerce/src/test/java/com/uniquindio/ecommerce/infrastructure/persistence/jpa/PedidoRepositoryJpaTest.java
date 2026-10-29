@@ -22,8 +22,10 @@ import org.springframework.context.annotation.Import;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Prueba que el agregado Pedido se guarda y se lee completo (raiz + lineas) en la base de datos.
@@ -91,5 +93,18 @@ class PedidoRepositoryJpaTest {
         // Assert
         assertEquals(EstadoPedido.CANCELADO, leido.getEstado());
         assertEquals(1, leido.getLineas().size());
+    }
+
+    @Test
+    void buscarPorCompradorDevuelveSoloLosPedidosDeEseComprador() {
+        // Arrange: en data.sql el comprador c1c1...0001 tiene 3 pedidos
+        CompradorId comprador = new CompradorId(UUID.fromString("c1c1c1c1-0000-4000-8000-000000000001"));
+
+        // Act
+        List<Pedido> pedidos = repository.buscarPorComprador(comprador);
+
+        // Assert
+        assertEquals(3, pedidos.size());
+        assertTrue(pedidos.stream().allMatch(pedido -> pedido.getCompradorId().equals(comprador)));
     }
 }
