@@ -53,7 +53,7 @@ class ActualizarStockPublicacionUseCaseTest {
         when(publicacionRepository.buscarPorId(comedero.getId())).thenReturn(Optional.of(comedero));
 
         // Act
-        useCase.ejecutar(comedero.getId().valor(), 5);
+        useCase.ejecutar(comedero.getId(), new Stock(5));
 
         // Assert
         assertEquals(5, comedero.getStock().unidades());
@@ -69,7 +69,7 @@ class ActualizarStockPublicacionUseCaseTest {
         when(publicacionRepository.buscarPorId(comedero.getId())).thenReturn(Optional.of(comedero));
 
         // Act
-        Executable actualizar = () -> useCase.ejecutar(comedero.getId().valor(), 10);
+        Executable actualizar = () -> useCase.ejecutar(comedero.getId(), new Stock(10));
 
         // Assert
         assertThrows(ReglaDominioException.class, actualizar);
