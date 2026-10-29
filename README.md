@@ -19,21 +19,22 @@ ecommerce/src/main/java/com/uniquindio/ecommerce
 │   ├── entity        → Pedido, LineaPedido, Publicacion
 │   ├── valueobject   → Dinero, Cantidad, Stock, EspecieDestino, PedidoId, PublicacionId,
 │   │                   CompradorId, VendedorId, EstadoPedido, EstadoPublicacion, CategoriaProducto
-│   ├── repository    → PedidoRepository, PublicacionRepository (interfaces)
+│   ├── repository    → PedidoRepository, PublicacionRepository (interfaces), Pagina, PublicacionVentas
 │   └── exception     → ReglaDominioException
 ├── application
 │   ├── dto
 │   │   ├── request   → CrearPublicacionRequest, CrearPedidoRequest
-│   │   └── response  → PedidoResponse
+│   │   └── response  → PedidoResponse, PublicacionResponse, PageResponse, MasVendidaResponse
 │   └── usecase       → vendedor: CrearPublicacionUseCase, ActualizarStockPublicacionUseCase, RetirarPublicacionUseCase
 │                       comprador: CrearPedidoUseCase, ConfirmarPedidoUseCase, CancelarPedidoUseCase
+│                       consultas: ConsultarCatalogoUseCase
 └── infrastructure
     ├── config        → OpenApiConfig (Swagger)
     ├── persistence   → PedidoRepositoryEnMemoria, PublicacionRepositoryEnMemoria (solo para pruebas)
     │   └── jpa       → PedidoRepositoryJpa, PublicacionRepositoryJpa (+ sus repositorios de Spring Data)
     │       ├── entity → PedidoEntity, LineaPedidoEntity, PublicacionEntity, DineroEmbeddable
     │       └── mapper → PedidoPersistenceMapper, PublicacionPersistenceMapper
-    └── rest
+    └── rest          → ConsultasPublicacionController
         └── exception → GlobalExceptionHandler
 ```
 
@@ -46,6 +47,18 @@ El paquete `domain` no depende de Spring, JPA ni Lombok. Los repositorios son in
 - Las entidades JPA (`infrastructure/persistence/jpa/entity`) son clases distintas de las entidades del dominio; un mapper convierte entre ellas usando `reconstruir(...)` del dominio.
 - `data.sql` carga datos de prueba: 10 publicaciones de perro y gato (una AGOTADA y una RETIRADA) y 7 pedidos en distintos estados.
 - Retirar una publicación no borra la fila: queda en estado RETIRADA (eliminación lógica).
+
+## Consultas
+
+| Método | Ruta | Qué hace |
+|---|---|---|
+| GET | `/api/publicaciones?texto=&especie=&categoria=&pagina=0&tamano=10` | Catálogo paginado: busca el texto en el nombre o la descripción y filtra por especie (`PERRO`, `GATO`) y categoría (`ALIMENTO`, `JUGUETE`, `ACCESORIO`, `HIGIENE`, `SALUD`). No muestra las publicaciones retiradas. Responde el contenido, `totalElementos` y `totalPaginas` |
+| GET | `/api/publicaciones/mas-vendidas?limite=5` | Ranking de las publicaciones con más unidades vendidas (pedidos confirmados, enviados o entregados) |
+| GET | `/api/publicaciones/{id}` | Detalle de una publicación (404 si no existe) |
+
+- El catálogo es una consulta JPQL con parámetros con nombre, y el ranking usa `JOIN`, `GROUP BY` y `SUM`: el filtro, el conteo y la paginación los hace la base de datos, no Java.
+- El dominio no usa la paginación de Spring: el adaptador convierte el `Page` de Spring en `Pagina`, que es del dominio.
+- La página no puede ser negativa y el tamaño va de 1 a 50; si no, responde 400.
 
 ## Correcciones de la Entrega 1
 
