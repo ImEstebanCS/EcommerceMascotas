@@ -46,7 +46,7 @@ class RetirarPublicacionUseCaseTest {
         when(publicacionRepository.buscarPorId(arena.getId())).thenReturn(Optional.of(arena));
 
         // Act
-        useCase.ejecutar(arena.getId());
+        useCase.ejecutar(arena.getId(), arena.getVendedorId());
 
         // Assert
         assertEquals(EstadoPublicacion.RETIRADA, arena.getEstado());
@@ -60,7 +60,7 @@ class RetirarPublicacionUseCaseTest {
         when(publicacionRepository.buscarPorId(idQueNoExiste)).thenReturn(Optional.empty());
 
         // Act
-        Executable retirar = () -> useCase.ejecutar(idQueNoExiste);
+        Executable retirar = () -> useCase.ejecutar(idQueNoExiste, VendedorId.nuevo());
 
         // Assert
         assertThrows(NoSuchElementException.class, retirar);
