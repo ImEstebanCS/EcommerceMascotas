@@ -8,8 +8,10 @@ Proyecto del curso Programación Avanzada, Universidad del Quindío, 2026-2.
 ## Stack
 
 - Java 21
-- Spring Boot 4.1.1 (Gradle)
-- JUnit 5
+- Spring Boot 4.1.1 (Gradle), Spring Data JPA, H2
+- Spring Security con JWT (OAuth2 Resource Server) y BCrypt
+- springdoc-openapi (Swagger)
+- JUnit 5 y Mockito
 
 ## Estructura
 
@@ -23,18 +25,20 @@ ecommerce/src/main/java/com/uniquindio/ecommerce
 │   └── exception     → ReglaDominioException
 ├── application
 │   ├── dto
-│   │   ├── request   → CrearPublicacionRequest, ActualizarStockRequest, CrearPedidoRequest
-│   │   └── response  → PedidoResponse, PublicacionResponse, PageResponse, MasVendidaResponse
+│   │   ├── request   → CrearPublicacionRequest, ActualizarStockRequest, CrearPedidoRequest, LoginRequest, RegistroRequest
+│   │   └── response  → PedidoResponse, PublicacionResponse, PageResponse, MasVendidaResponse, TokenResponse, UsuarioResponse
 │   └── usecase       → vendedor: CrearPublicacionUseCase, ActualizarStockPublicacionUseCase, RetirarPublicacionUseCase
 │                       comprador: CrearPedidoUseCase, ConfirmarPedidoUseCase, CancelarPedidoUseCase
 │                       consultas: ConsultarCatalogoUseCase, ConsultarPedidosUseCase
 └── infrastructure
     ├── config        → OpenApiConfig (Swagger)
     ├── persistence   → PedidoRepositoryEnMemoria, PublicacionRepositoryEnMemoria (solo para pruebas)
-    │   └── jpa       → PedidoRepositoryJpa, PublicacionRepositoryJpa (+ sus repositorios de Spring Data)
-    │       ├── entity → PedidoEntity, LineaPedidoEntity, PublicacionEntity, DineroEmbeddable
+    │   └── jpa       → PedidoRepositoryJpa, PublicacionRepositoryJpa (+ sus repositorios de Spring Data), UsuarioJpaDataRepository
+    │       ├── entity → PedidoEntity, LineaPedidoEntity, PublicacionEntity, DineroEmbeddable, UsuarioEntity, RolUsuario
     │       └── mapper → PedidoPersistenceMapper, PublicacionPersistenceMapper
-    └── rest          → PublicacionController, ConsultasPublicacionController, PedidoController, ConsultasPedidoController
+    ├── security      → SecurityConfig (reglas de acceso), JwtConfig, JwtTokenProvider, AutenticacionService,
+    │                   CustomUserDetails, UsuarioAutenticado, ManejadorErroresSeguridad, UsuariosIniciales
+    └── rest          → AuthController, PublicacionController, ConsultasPublicacionController, PedidoController, ConsultasPedidoController
         ├── mapper    → PublicacionMapper, PedidoMapper (DTO ↔ dominio)
         └── exception → GlobalExceptionHandler
 ```
@@ -49,6 +53,54 @@ El paquete `domain` no depende de Spring, JPA ni Lombok. Los repositorios son in
 - `data.sql` carga datos de prueba: 10 publicaciones de perro y gato (una AGOTADA y una RETIRADA) y 7 pedidos en distintos estados.
 - Retirar una publicación no borra la fila: queda en estado RETIRADA (eliminación lógica).
 
+## Seguridad (JWT)
+
+### Usuarios de prueba
+
+Se crean al arrancar (`UsuariosIniciales`) y sus ids son los mismos vendedores y compradores de `data.sql`, así cada uno ve sus propias publicaciones y pedidos.
+
+| Correo | Contraseña | Rol | Qué tiene en los datos de prueba |
+|---|---|---|---|
+| `patitas@mascotas.com` | `vendedor123` | VENDEDOR | Tienda Patitas: publicaciones de perro (collar, concentrado, hueso, shampoo, correa) |
+| `michi@mascotas.com` | `vendedor123` | VENDEDOR | Michi Store: publicaciones de gato (rascador, arena, snacks, desparasitante, cama) |
+| `ana@mascotas.com` | `comprador123` | COMPRADOR | 3 pedidos (ENTREGADO, CONFIRMADO, CONFIRMADO) |
+| `bruno@mascotas.com` | `comprador123` | COMPRADOR | 2 pedidos (ENVIADO, BORRADOR) |
+| `carla@mascotas.com` | `comprador123` | COMPRADOR | 2 pedidos (CANCELADO, ENTREGADO) |
+
+### Cómo probar en Swagger
+
+1. `POST /api/auth/login` con `{"email": "ana@mascotas.com", "password": "comprador123"}` y copiar el `token`.
+2. Botón **Authorize** (arriba a la derecha), pegar el token y **Authorize**. Desde ahí Swagger manda `Authorization: Bearer <token>` en cada petición.
+3. Para cambiar de usuario: **Authorize → Logout** y pegar otro token.
+
+### Endpoints de autenticación
+
+| Método | Ruta | Qué hace |
+|---|---|---|
+| POST | `/api/auth/registro` | Crea una cuenta: `{"nombre", "email", "password" (mínimo 6), "rol": "COMPRADOR" o "VENDEDOR"}`. Responde 201; si el correo ya existe, 409 |
+| POST | `/api/auth/login` | Revisa correo y contraseña y devuelve el token, su vencimiento y el rol. Si no coinciden, 401 |
+
+### Quién puede usar cada ruta
+
+| Rutas | Acceso |
+|---|---|
+| `/api/auth/**`, Swagger, consola H2 | Públicas |
+| `GET /api/publicaciones/**` (catálogo, ranking, detalle) | Públicas |
+| `POST /api/publicaciones`, `PUT /api/publicaciones/{id}/stock`, `DELETE /api/publicaciones/{id}` | Solo **VENDEDOR** |
+| `/api/pedidos/**` | Solo **COMPRADOR** |
+
+- **401**: sin token, con un token alterado o vencido. **403**: token válido pero de otro rol (por ejemplo, un comprador intentando publicar). Los dos responden un JSON con `mensaje`.
+- Las reglas de acceso están en `infrastructure/security/SecurityConfig.java`.
+- El comprador o vendedor **sale del token** (claim `uid`), no del body: nadie puede crear pedidos o publicaciones a nombre de otro. Si un comprador pide un pedido de otro comprador, o un vendedor intenta cambiar una publicación de otro vendedor, responde 404, como si no existiera.
+
+### El token
+
+- Lleva en el payload el correo (`sub`), el id (`uid`), el rol (`rol`), cuándo se emitió (`iat`) y cuándo vence (`exp`). Se puede leer en jwt.io porque solo está en base64, por eso **no** lleva la contraseña.
+- Está firmado con HS256 y una clave secreta: si alguien cambia el payload, la firma deja de coincidir y la API responde 401.
+- La clave (`jwt.secret`) y la duración (`jwt.expiracion-minutos`, 60) están en `application.properties`, no en el código.
+- La API es **stateless**: no guarda sesiones. Cada petición trae su token y se valida sola.
+- Las contraseñas se guardan con **BCrypt** (hash con sal, lento a propósito y que no se puede revertir), nunca en texto plano.
+
 ## Publicaciones (vendedor)
 
 | Método | Ruta | Qué hace |
@@ -57,6 +109,7 @@ El paquete `domain` no depende de Spring, JPA ni Lombok. Los repositorios son in
 | PUT | `/api/publicaciones/{id}/stock` | Cambia el stock (body `{"stock": 5}`); con 0 queda AGOTADA y si estaba agotada vuelve a PUBLICADA |
 | DELETE | `/api/publicaciones/{id}` | Retira la publicación. Es una eliminación lógica: la fila no se borra, queda en estado RETIRADA y deja de salir en el catálogo |
 
+- Requieren el token de un VENDEDOR. La publicación queda a nombre del vendedor del token, y cada vendedor solo cambia o retira las suyas.
 - **400** cuando la petición viene incompleta (falta el nombre, la descripción, el precio…): lo revisan las validaciones del DTO.
 - **409** cuando la petición está completa pero rompe una regla del negocio: especie distinta de PERRO o GATO, precio 0, descripción de más de 500 caracteres, stock negativo o retirar dos veces. Esas reglas viven en el dominio, no en el DTO.
 
@@ -79,19 +132,19 @@ El paquete `domain` no depende de Spring, JPA ni Lombok. Los repositorios son in
 | POST | `/api/pedidos` | Crea un pedido en BORRADOR con sus líneas. Responde 201 con la dirección del pedido nuevo |
 | PUT | `/api/pedidos/{id}/confirmar` | Confirma el pedido y descuenta el stock de cada publicación |
 | PUT | `/api/pedidos/{id}/cancelar` | Cancela el pedido; si ya estaba confirmado, el stock vuelve a las publicaciones |
-| GET | `/api/pedidos?compradorId=` | Pedidos de un comprador |
-| GET | `/api/pedidos/{id}` | Detalle de un pedido (404 si no existe) |
+| GET | `/api/pedidos` | Mis pedidos: los del comprador del token |
+| GET | `/api/pedidos/{id}` | Detalle de uno de mis pedidos (404 si no existe o es de otro comprador) |
 
-Ejemplo para crear un pedido con los datos de prueba (2 rascadores para el comprador `c1c1…0002`):
+Todos requieren el token de un COMPRADOR. Ejemplo para crear un pedido de 2 rascadores (con el token de Bruno, por ejemplo):
 
 ```json
 {
-  "compradorId": "c1c1c1c1-0000-4000-8000-000000000002",
   "lineas": [{ "publicacionId": "b0b0b0b0-0000-4000-8000-000000000005", "cantidad": 2 }]
 }
 ```
 
-- El precio no viaja en la petición: lo toma el dominio de la publicación, así nadie puede mandar un precio inventado.
+- El comprador no viaja en la petición: sale del token.
+- El precio tampoco: lo toma el dominio de la publicación, así nadie puede mandar un precio inventado.
 - Los casos de uso reciben tipos del dominio (`CompradorId`, `PedidoId`, `PublicacionId`, `Cantidad`) y devuelven el `Pedido`. `PedidoMapper` convierte el DTO en esos tipos y el `Pedido` en `PedidoResponse`, así el caso de uso no depende de HTTP.
 - Errores de negocio a propósito para probar (409): pedir más unidades que el stock, pedir una publicación retirada (`…0009`), confirmar dos veces el mismo pedido o cancelar un pedido ENVIADO (`d0d0…0003`).
 
@@ -136,7 +189,7 @@ En Windows: `gradlew.bat bootRun`. Con la aplicación corriendo:
 | Documentación OpenAPI en JSON | http://localhost:8080/api-docs |
 | Consola de la base de datos H2 | http://localhost:8080/h2-console (JDBC URL: `jdbc:h2:mem:ecommercedb`, usuario `sa`, sin contraseña) |
 
-Errores de la API: 400 datos inválidos, 404 el recurso no existe, 409 se rompió una regla de negocio. Todos responden un JSON con `status`, `error` y `mensaje`.
+Errores de la API: 400 datos inválidos, 401 sin token o login fallido, 403 rol sin permiso, 404 el recurso no existe, 409 se rompió una regla de negocio. Todos responden un JSON con `status`, `error` y `mensaje`.
 
 ## Cómo correr las pruebas
 

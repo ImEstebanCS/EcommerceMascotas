@@ -8,9 +8,10 @@ Las validaciones del DTO (`@NotNull`, `@NotBlank`, `@Min`) revisan que la petici
 
 Body de `POST /api/publicaciones` (caso de uso **CrearPublicacion**). [Ver código](ecommerce/src/main/java/com/uniquindio/ecommerce/application/dto/request/CrearPublicacionRequest.java)
 
+El vendedor no viene en el body: sale del token (claim `uid`), así nadie puede publicar a nombre de otro.
+
 | Campo | Tipo | Validación del DTO (400) | Por qué es necesario |
 |---|---|---|---|
-| `vendedorId` | `UUID` | `@NotNull` | Saber qué vendedor es dueño de la publicación. |
 | `nombreProducto` | `String` | `@NotBlank` | Lo que ve el comprador en el anuncio. |
 | `descripcion` | `String` | `@NotBlank` | Obligatoria: explica el producto al comprador (material, tamaño, para qué sirve). Que no supere 500 caracteres lo revisa el dominio (409). |
 | `especieDestino` | `String` | `@NotBlank` | Regla 1: solo PERRO o GATO. Se convierte con `EspecieDestino.desde(...)`; otra especie responde 409. |
@@ -45,16 +46,17 @@ Respuesta de los endpoints de publicaciones (crear, cambiar stock, retirar y con
 
 Body de `POST /api/pedidos` (caso de uso **CrearPedido**). [Ver código](ecommerce/src/main/java/com/uniquindio/ecommerce/application/dto/request/CrearPedidoRequest.java)
 
+El comprador no viene en el body: sale del token (claim `uid`), así nadie puede crear pedidos a nombre de otro.
+
 | Campo | Tipo | Validación (400 si falla) | Por qué es necesario |
 |---|---|---|---|
-| `compradorId` | `UUID` | `@NotNull` | Saber quién hace el pedido. |
 | `lineas` | `List<LineaPedidoRequest>` | `@NotEmpty` | Los productos que se piden; un pedido sin líneas no se puede confirmar. |
 | `lineas[].publicacionId` | `UUID` | `@NotNull` | Para buscar la publicación y tomar su precio, especie y stock. |
 | `lineas[].cantidad` | `int` | `@Min(1)` | Unidades pedidas. Que no superen el stock lo revisa el dominio (409). |
 
 El precio no viene en el request a propósito: lo toma el dominio de la publicación, así el comprador no puede mandar un precio inventado.
 
-El caso de uso no recibe este DTO: `PedidoMapper` lo convierte en `CompradorId` y una lista de `LineaSolicitada(PublicacionId, Cantidad)`.
+El caso de uso no recibe este DTO: `PedidoMapper` lo convierte en una lista de `LineaSolicitada(PublicacionId, Cantidad)`, y el `CompradorId` lo arma el controller a partir del token.
 
 ## PedidoResponse
 
@@ -72,3 +74,38 @@ Respuesta de todos los endpoints de pedidos (crear, confirmar, cancelar y consul
 | `lineas[].cantidad` | `int` | Cuántas unidades. |
 | `lineas[].precioUnitario` | `BigDecimal` | El precio que tenía la publicación cuando se agregó al pedido. |
 | `lineas[].subtotal` | `BigDecimal` | Precio unitario por cantidad de esa línea. |
+
+## RegistroRequest
+
+Body de `POST /api/auth/registro`. [Ver código](ecommerce/src/main/java/com/uniquindio/ecommerce/application/dto/request/RegistroRequest.java)
+
+| Campo | Tipo | Validación (400 si falla) | Por qué es necesario |
+|---|---|---|---|
+| `nombre` | `String` | `@NotBlank` | Cómo se llama el usuario o la tienda. |
+| `email` | `String` | `@NotBlank`, `@Email` | Es el usuario para iniciar sesión; no se puede repetir (409). |
+| `password` | `String` | `@NotBlank`, `@Size(min = 6)` | Se guarda solo su hash BCrypt. |
+| `rol` | `String` | `@Pattern("COMPRADOR\|VENDEDOR")` | Define qué rutas podrá usar. |
+
+## LoginRequest
+
+Body de `POST /api/auth/login`. [Ver código](ecommerce/src/main/java/com/uniquindio/ecommerce/application/dto/request/LoginRequest.java)
+
+| Campo | Tipo | Validación (400 si falla) | Por qué es necesario |
+|---|---|---|---|
+| `email` | `String` | `@NotBlank`, `@Email` | Para buscar al usuario. |
+| `password` | `String` | `@NotBlank` | Se compara con el hash BCrypt guardado; si no coincide, 401. |
+
+## TokenResponse
+
+Respuesta del login. [Ver código](ecommerce/src/main/java/com/uniquindio/ecommerce/application/dto/response/TokenResponse.java)
+
+| Campo | Tipo | Por qué es necesario |
+|---|---|---|
+| `token` | `String` | El JWT que se manda en `Authorization: Bearer <token>` (en Swagger, en el botón Authorize). |
+| `tipo` | `String` | Siempre `Bearer` ("portador"): quien presenta el token es tratado como ese usuario. |
+| `expiraEn` | `Instant` | Cuándo vence el token (60 minutos, configurable). |
+| `email`, `rol` | `String` | Para saber con quién se inició sesión sin tener que decodificar el token. |
+
+## UsuarioResponse
+
+Respuesta del registro: `id`, `nombre`, `email` y `rol`. Nunca incluye la contraseña ni su hash. [Ver código](ecommerce/src/main/java/com/uniquindio/ecommerce/application/dto/response/UsuarioResponse.java)
