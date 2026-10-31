@@ -5,6 +5,7 @@ import com.uniquindio.ecommerce.domain.entity.Pedido;
 import com.uniquindio.ecommerce.domain.entity.Publicacion;
 import com.uniquindio.ecommerce.domain.repository.PedidoRepository;
 import com.uniquindio.ecommerce.domain.repository.PublicacionRepository;
+import com.uniquindio.ecommerce.domain.valueobject.CompradorId;
 import com.uniquindio.ecommerce.domain.valueobject.PedidoId;
 
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import java.util.NoSuchElementException;
 /**
  * Caso de uso del comprador: confirmar un pedido y descontar el stock de sus publicaciones.
  * Devuelve el Pedido del dominio; la API lo convierte en su DTO de respuesta.
+ * Un comprador solo confirma sus pedidos: si el pedido es de otro, responde como si no existiera.
  * Repositories: PedidoRepository y PublicacionRepository.
  */
 @Service
@@ -28,8 +30,9 @@ public class ConfirmarPedidoUseCase {
     private final PublicacionRepository publicacionRepository;
 
     @Transactional
-    public Pedido ejecutar(PedidoId pedidoId) {
+    public Pedido ejecutar(PedidoId pedidoId, CompradorId compradorId) {
         Pedido pedido = pedidoRepository.buscarPorId(pedidoId)
+                .filter(encontrado -> encontrado.getCompradorId().equals(compradorId))
                 .orElseThrow(() -> new NoSuchElementException("El pedido " + pedidoId.valor() + " no existe"));
 
         List<Publicacion> publicaciones = new ArrayList<>();

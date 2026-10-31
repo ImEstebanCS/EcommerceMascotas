@@ -10,12 +10,10 @@ import java.util.UUID;
 
 /**
  * Datos que envia el comprador para crear un pedido (caso de uso CrearPedidoUseCase).
+ * El comprador no viene aqui: sale del token, asi nadie puede crear pedidos a nombre de otro.
  * Las validaciones revisan el formato de la peticion (400); reglas como el stock las revisa el dominio (409).
  */
 public record CrearPedidoRequest(
-        @NotNull(message = "El comprador es obligatorio")
-        UUID compradorId,
-
         @NotEmpty(message = "El pedido necesita al menos una linea")
         List<@Valid @NotNull(message = "La linea no puede venir vacia") LineaPedidoRequest> lineas
 ) {
