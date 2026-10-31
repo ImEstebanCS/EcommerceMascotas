@@ -24,6 +24,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -67,7 +68,7 @@ class ConfirmarPedidoUseCaseTest {
         when(publicacionRepository.buscarPorId(rascador.getId())).thenReturn(Optional.of(rascador));
 
         // Act
-        Pedido confirmado = useCase.ejecutar(pedido.getId());
+        Pedido confirmado = useCase.ejecutar(pedido.getId(), pedido.getCompradorId());
 
         // Assert
         assertEquals(EstadoPedido.CONFIRMADO, confirmado.getEstado());
@@ -86,7 +87,7 @@ class ConfirmarPedidoUseCaseTest {
         when(publicacionRepository.buscarPorId(rascador.getId())).thenReturn(Optional.of(rascador));
 
         // Act
-        Executable confirmar = () -> useCase.ejecutar(pedido.getId());
+        Executable confirmar = () -> useCase.ejecutar(pedido.getId(), pedido.getCompradorId());
 
         // Assert: el pedido sigue en borrador y el stock no se toco
         assertThrows(ReglaDominioException.class, confirmar);
@@ -94,5 +95,21 @@ class ConfirmarPedidoUseCaseTest {
         assertEquals(2, rascador.getStock().unidades());
         verify(pedidoRepository, never()).guardar(any());
         verify(publicacionRepository, never()).guardar(any());
+    }
+
+    @Test
+    void confirmarElPedidoDeOtroCompradorLanzaNoSuchElementExceptionYNoGuardaNada() {
+        // Arrange: el pedido existe, pero el token es de otro comprador
+        Publicacion rascador = rascadorPublicado(5);
+        Pedido pedido = pedidoEnBorrador(rascador, 1);
+        when(pedidoRepository.buscarPorId(pedido.getId())).thenReturn(Optional.of(pedido));
+
+        // Act
+        Executable confirmar = () -> useCase.ejecutar(pedido.getId(), CompradorId.nuevo());
+
+        // Assert: responde como si no existiera (404) y el pedido sigue en borrador
+        assertThrows(NoSuchElementException.class, confirmar);
+        assertEquals(EstadoPedido.BORRADOR, pedido.getEstado());
+        verify(pedidoRepository, never()).guardar(any());
     }
 }
