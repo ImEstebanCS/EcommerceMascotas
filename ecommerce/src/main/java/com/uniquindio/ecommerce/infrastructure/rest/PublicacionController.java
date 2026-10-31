@@ -11,10 +11,14 @@ import com.uniquindio.ecommerce.domain.valueobject.PublicacionId;
 import com.uniquindio.ecommerce.domain.valueobject.Stock;
 import com.uniquindio.ecommerce.domain.valueobject.VendedorId;
 import com.uniquindio.ecommerce.infrastructure.rest.mapper.PublicacionMapper;
+import com.uniquindio.ecommerce.infrastructure.security.UsuarioAutenticado;
 
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,9 +32,9 @@ import java.net.URI;
 import java.util.UUID;
 
 /**
- * Endpoints del vendedor que cambian una publicacion: crearla, cambiar su stock y retirarla.
+ * Endpoints del vendedor que cambian una publicacion: crearla, cambiar su stock y retirarla (rol VENDEDOR).
  * Es delgado: el mapper convierte el DTO en tipos del dominio, el caso de uso hace el trabajo
- * y la respuesta vuelve como DTO. Una regla de negocio rota responde 409 (GlobalExceptionHandler).
+ * y la respuesta vuelve como DTO. El vendedor sale del token, no del body.
  */
 @RestController
 @RequestMapping("/api/publicaciones")
@@ -44,9 +48,9 @@ public class PublicacionController {
 
     /** Crea la publicacion ya PUBLICADA y responde 201 con la direccion de la publicacion nueva. */
     @PostMapping
-    public ResponseEntity<PublicacionResponse> crear(@Valid @RequestBody CrearPublicacionRequest request) {
-        Publicacion publicacion = crearPublicacionUseCase.ejecutar(
-                mapper.toNuevaPublicacion(new VendedorId(request.vendedorId()), request));
+    public ResponseEntity<PublicacionResponse> crear(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
+                                                     @Valid @RequestBody CrearPublicacionRequest request) {
+        Publicacion publicacion = crearPublicacionUseCase.ejecutar(mapper.toNuevaPublicacion(vendedorDe(jwt), request));
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
@@ -57,14 +61,21 @@ public class PublicacionController {
 
     /** Cambia el stock; con 0 queda AGOTADA y si estaba agotada vuelve a PUBLICADA. */
     @PutMapping("/{id}/stock")
-    public PublicacionResponse actualizarStock(@PathVariable("id") UUID id,
+    public PublicacionResponse actualizarStock(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
+                                               @PathVariable("id") UUID id,
                                                @Valid @RequestBody ActualizarStockRequest request) {
-        return mapper.toResponse(actualizarStockPublicacionUseCase.ejecutar(new PublicacionId(id), new Stock(request.stock())));
+        return mapper.toResponse(actualizarStockPublicacionUseCase.ejecutar(
+                new PublicacionId(id), vendedorDe(jwt), new Stock(request.stock())));
     }
 
     /** Eliminacion logica: la publicacion queda RETIRADA, la fila no se borra. */
     @DeleteMapping("/{id}")
-    public PublicacionResponse retirar(@PathVariable("id") UUID id) {
-        return mapper.toResponse(retirarPublicacionUseCase.ejecutar(new PublicacionId(id)));
+    public PublicacionResponse retirar(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
+                                       @PathVariable("id") UUID id) {
+        return mapper.toResponse(retirarPublicacionUseCase.ejecutar(new PublicacionId(id), vendedorDe(jwt)));
+    }
+
+    private VendedorId vendedorDe(Jwt jwt) {
+        return new VendedorId(UsuarioAutenticado.id(jwt));
     }
 }

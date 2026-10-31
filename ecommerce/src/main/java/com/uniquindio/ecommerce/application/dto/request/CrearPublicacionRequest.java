@@ -4,17 +4,14 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
-import java.util.UUID;
 
 /**
  * Datos que envia el vendedor para crear una publicacion (caso de uso CrearPublicacionUseCase).
+ * El vendedor no viene aqui: sale del token, asi nadie puede publicar a nombre de otro.
  * Las validaciones revisan que la peticion venga completa (400); las reglas del negocio
  * (precio mayor a cero, solo perro o gato, descripcion de maximo 500) las revisa el dominio (409).
  */
 public record CrearPublicacionRequest(
-        @NotNull(message = "El vendedor es obligatorio")
-        UUID vendedorId,
-
         @NotBlank(message = "El nombre del producto es obligatorio")
         String nombreProducto,
 
