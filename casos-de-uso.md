@@ -19,6 +19,8 @@ Además hay dos casos de uso de solo lectura: `ConsultarCatalogoUseCase` (catál
 
 Los casos de uso reciben tipos del dominio (`VendedorId`, `CompradorId`, `PublicacionId`, `PedidoId`, `Stock`, `Cantidad`...) y devuelven la entidad (`Publicacion` o `Pedido`), no DTOs. Los mappers de la API (`PublicacionMapper` y `PedidoMapper`) convierten el DTO en esos tipos antes de llamarlos, y la entidad en el DTO de respuesta. Así la capa de aplicación no depende de HTTP.
 
+El `VendedorId` o `CompradorId` que reciben sale del token de quien hace la petición. Por eso los casos de uso que cambian o consultan algo existente buscan por id **y** por dueño: si la publicación es de otro vendedor, o el pedido es de otro comprador, responden `NoSuchElementException` (404), como si no existiera.
+
 ## Detalle
 
 ### 1. CrearPublicacion (vendedor)
