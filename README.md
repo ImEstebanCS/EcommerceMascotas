@@ -191,6 +191,23 @@ En Windows: `gradlew.bat bootRun`. Con la aplicación corriendo:
 
 Errores de la API: 400 datos inválidos, 401 sin token o login fallido, 403 rol sin permiso, 404 el recurso no existe, 409 se rompió una regla de negocio. Todos responden un JSON con `status`, `error` y `mensaje`.
 
+## Pruebas
+
+48 pruebas en verde, todas con el patrón AAA (Arrange, Act, Assert):
+
+| Tipo | Clases | Qué comprueban |
+|---|---|---|
+| Dominio (JUnit puro) | `PedidoTest`, `PublicacionTest`, `DineroTest`, `CantidadTest` | Las invariantes de los agregados y los value objects, incluidos los casos que rompen una regla |
+| Casos de uso (Mockito) | `CrearPedido…`, `ConfirmarPedido…`, `CancelarPedido…`, `CrearPublicacion…`, `ActualizarStockPublicacion…`, `RetirarPublicacion…`, `ConsultarCatalogo…UseCaseTest` | Que cada caso de uso coordina bien. Cuando se rompe una regla, comprueban con `verify(..., never()).guardar(...)` que no se guarda nada |
+| Controller (`@WebMvcTest`) | `PedidoControllerTest` | 201 con `Location`; **401 sin token, 403 con el rol equivocado y 201 con el rol correcto**; 400 por validación; 404 y 409 con su mensaje |
+| Repositorio (`@DataJpaTest`) | `PedidoRepositoryJpaTest`, `PublicacionRepositoryJpaTest`, `ConsultasPublicacionRepositoryJpaTest` | Que el agregado se guarda y se lee completo; la consulta paginada y el ranking sobre `data.sql` |
+| Integración (`@SpringBootTest`) | `FlujoPedidoIntegracionTest`, `EcommerceApplicationTests` | El sistema real sin simular nada: login con BCrypt y JWT, crear y confirmar un pedido, y que el stock baje en la base |
+
+**`@DataJpaTest` frente a `@SpringBootTest`:**
+- `@DataJpaTest` levanta solo la parte de JPA (entidades, repositorios y una base H2 de prueba), sin controllers ni seguridad. Por eso es rápido y sirve para probar consultas. Cada prueba corre en una transacción que se deshace al final. En Spring Boot 4 cambió de paquete: ahora es `org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest`.
+- `@SpringBootTest` levanta la aplicación completa. Lo usamos para la prueba de integración, que pasa por todas las capas.
+- `@WebMvcTest` levanta solo la capa web. En `PedidoControllerTest` importamos la configuración de seguridad real para que las reglas de 401 y 403 se prueben de verdad; el token se simula con `jwt()` de spring-security-test.
+
 ## Cómo correr las pruebas
 
 Desde la carpeta `ecommerce`:
