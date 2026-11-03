@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class PublicacionTest {
 
     private Publicacion crearPublicacion(PublicacionId id, String nombre, int stock) {
-        return Publicacion.crear(id, VendedorId.nuevo(), nombre, EspecieDestino.PERRO,
+        return Publicacion.crear(id, VendedorId.nuevo(), nombre, "Producto para perro: " + nombre, EspecieDestino.PERRO,
                 new Dinero(new BigDecimal("45000"), "COP"), new Stock(stock), CategoriaProducto.ALIMENTO);
     }
 
@@ -52,7 +52,22 @@ class PublicacionTest {
 
         // Act
         Executable crear = () -> Publicacion.crear(PublicacionId.nuevo(), VendedorId.nuevo(),
-                "Arena para gato", EspecieDestino.GATO, precioCero, new Stock(5), CategoriaProducto.HIGIENE);
+                "Arena para gato", "Arena aglomerante de 4 kg", EspecieDestino.GATO, precioCero, new Stock(5),
+                CategoriaProducto.HIGIENE);
+
+        // Assert
+        assertThrows(ReglaDominioException.class, crear);
+    }
+
+    @Test
+    void crearPublicacionSinDescripcionLanzaReglaDominioException() {
+        // Arrange: una descripcion vacia (solo espacios)
+        String descripcionVacia = "   ";
+
+        // Act
+        Executable crear = () -> Publicacion.crear(PublicacionId.nuevo(), VendedorId.nuevo(),
+                "Arena para gato", descripcionVacia, EspecieDestino.GATO,
+                new Dinero(new BigDecimal("30000"), "COP"), new Stock(5), CategoriaProducto.HIGIENE);
 
         // Assert
         assertThrows(ReglaDominioException.class, crear);

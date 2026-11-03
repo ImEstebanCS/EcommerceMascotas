@@ -30,6 +30,7 @@ public class CrearPublicacionUseCase {
                 PublicacionId.nuevo(),
                 new VendedorId(request.vendedorId()),
                 request.nombreProducto(),
+                request.descripcion(),
                 EspecieDestino.desde(request.especieDestino()),
                 new Dinero(request.montoPrecio(), request.moneda()),
                 new Stock(request.stockInicial()),

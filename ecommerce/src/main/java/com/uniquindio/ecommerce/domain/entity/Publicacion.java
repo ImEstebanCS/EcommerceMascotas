@@ -20,24 +20,29 @@ import java.util.Objects;
  * 2. La especie destino siempre es PERRO o GATO (nunca null).
  * 3. Una publicacion PUBLICADA tiene stock >= 1; si el stock llega a 0 pasa a AGOTADA.
  * 4. RETIRADA es un estado final: no vuelve a publicarse ni acepta pedidos.
+ * 5. Toda publicacion tiene una descripcion: nunca vacia y de maximo 500 caracteres.
  */
 public class Publicacion {
+
+    public static final int MAXIMO_DESCRIPCION = 500;
 
     private final PublicacionId id;
     private final VendedorId vendedorId;
     private final String nombreProducto;
+    private final String descripcion;
     private final EspecieDestino especieDestino;
     private final Dinero precio;
     private final CategoriaProducto categoria;
     private Stock stock;
     private EstadoPublicacion estado;
-//Crear descripcion si o si descripcion
-    private Publicacion(PublicacionId id, VendedorId vendedorId, String nombreProducto,
+
+    private Publicacion(PublicacionId id, VendedorId vendedorId, String nombreProducto, String descripcion,
                         EspecieDestino especieDestino, Dinero precio, Stock stock,
                         CategoriaProducto categoria) {
         this.id = id;
         this.vendedorId = vendedorId;
         this.nombreProducto = nombreProducto;
+        this.descripcion = descripcion;
         this.especieDestino = especieDestino;
         this.precio = precio;
         this.stock = stock;
@@ -46,13 +51,19 @@ public class Publicacion {
     }
 
     public static Publicacion crear(PublicacionId id, VendedorId vendedorId, String nombreProducto,
-                                    EspecieDestino especieDestino, Dinero precio, Stock stock,
-                                    CategoriaProducto categoria) {
+                                    String descripcion, EspecieDestino especieDestino, Dinero precio,
+                                    Stock stock, CategoriaProducto categoria) {
         if (id == null || vendedorId == null) {
             throw new ReglaDominioException("La publicacion necesita id y vendedor");
         }
         if (nombreProducto == null || nombreProducto.isBlank()) {
             throw new ReglaDominioException("El nombre del producto es obligatorio");
+        }
+        if (descripcion == null || descripcion.isBlank()) {
+            throw new ReglaDominioException("La descripcion de la publicacion es obligatoria");
+        }
+        if (descripcion.length() > MAXIMO_DESCRIPCION) {
+            throw new ReglaDominioException("La descripcion no puede superar " + MAXIMO_DESCRIPCION + " caracteres");
         }
         if (especieDestino == null) {
             throw new ReglaDominioException("La publicacion debe ser para perro o gato");
@@ -63,7 +74,7 @@ public class Publicacion {
         if (stock == null || categoria == null) {
             throw new ReglaDominioException("La publicacion necesita stock y categoria");
         }
-        return new Publicacion(id, vendedorId, nombreProducto, especieDestino, precio, stock, categoria);
+        return new Publicacion(id, vendedorId, nombreProducto, descripcion, especieDestino, precio, stock, categoria);
     }
 
     public void publicar() {
@@ -131,6 +142,10 @@ public class Publicacion {
 
     public String getNombreProducto() {
         return nombreProducto;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
     }
 
     public EspecieDestino getEspecieDestino() {
