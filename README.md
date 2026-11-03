@@ -1,9 +1,17 @@
 # EcommerceMascotas
 
-Marketplace de productos para **perros y gatos** con dos roles: comprador y vendedor.
+**Nicho:** marketplace de productos para **perros y gatos** (alimento, juguetes, accesorios, higiene y salud). El vendedor publica sus productos con stock, y el comprador arma un pedido, lo confirma (se descuenta el stock) o lo cancela (el stock vuelve).
 Proyecto del curso Programación Avanzada, Universidad del Quindío, 2026-2.
 
-**Entrega 1:** modelo de dominio con DDD y arquitectura por capas.
+**Entrega 2:** backend completo, probado con Swagger: dominio, casos de uso, API REST, persistencia con JPA y H2, consultas, seguridad con JWT y pruebas. El frontend en Angular es la Entrega 3.
+
+## Integrantes
+
+| Integrante | GitHub | Qué hizo en la Entrega 2 |
+|---|---|---|
+| Jesús | [YisusLuligo](https://github.com/YisusLuligo) | Reorganización de las clases por tipo, configuración de la API (Swagger y manejo de errores), API de publicaciones del vendedor y seguridad con JWT |
+| Nicol | [Nicolmarin12](https://github.com/Nicolmarin12) | Casos de uso del vendedor, prueba de controller con seguridad (`@WebMvcTest`) y prueba de integración |
+| Esteban Carmona | [juanecarmonas-cpu](https://github.com/juanecarmonas-cpu) | Descripción obligatoria de la publicación, persistencia con JPA, consultas (catálogo paginado y ranking) y API de pedidos |
 
 ## Stack
 
@@ -147,6 +155,17 @@ Todos requieren el token de un COMPRADOR. Ejemplo para crear un pedido de 2 rasc
 - El precio tampoco: lo toma el dominio de la publicación, así nadie puede mandar un precio inventado.
 - Los casos de uso reciben tipos del dominio (`CompradorId`, `PedidoId`, `PublicacionId`, `Cantidad`) y devuelven el `Pedido`. `PedidoMapper` convierte el DTO en esos tipos y el `Pedido` en `PedidoResponse`, así el caso de uso no depende de HTTP.
 - Errores de negocio a propósito para probar (409): pedir más unidades que el stock, pedir una publicación retirada (`…0009`), confirmar dos veces el mismo pedido o cancelar un pedido ENVIADO (`d0d0…0003`).
+
+## Demo de punta a punta (en Swagger)
+
+1. `POST /api/auth/login` como vendedor (`patitas@mascotas.com` / `vendedor123`) y pegar el token en **Authorize**.
+2. `POST /api/publicaciones` para publicar un producto (responde 201 y el `id` de la publicación).
+3. **Authorize → Logout**, `POST /api/auth/login` como comprador (`bruno@mascotas.com` / `comprador123`) y pegar ese token.
+4. `POST /api/pedidos` con el `id` de la publicación y una cantidad (responde 201, pedido en BORRADOR).
+5. `PUT /api/pedidos/{id}/confirmar`: el pedido queda CONFIRMADO y `GET /api/publicaciones/{id}` muestra el stock descontado.
+6. **Error de negocio a propósito:** confirmar otra vez el mismo pedido responde **409** "Solo se puede confirmar un pedido en borrador". Esa excepción la lanza `Pedido.confirmar()` en el dominio y `GlobalExceptionHandler` la convierte en 409.
+7. `PUT /api/pedidos/{id}/cancelar`: el pedido queda CANCELADO y el stock vuelve.
+8. Seguridad: con el token del comprador, `POST /api/publicaciones` responde **403**; sin token, **401**.
 
 ## Correcciones de la Entrega 1
 
