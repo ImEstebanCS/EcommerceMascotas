@@ -10,7 +10,8 @@ import java.util.UUID;
 
 /**
  * Entidad interna del agregado Pedido. Solo el Pedido puede crearla o cambiarla,
- * por eso el factory y cambiarCantidad no son publicos.
+ * por eso crear y cambiarCantidad no son publicos. reconstruir es publico solo para que
+ * el adaptador de persistencia pueda revivir lineas que ya existian.
  */
 public class LineaPedido {
 
@@ -34,6 +35,15 @@ public class LineaPedido {
     static LineaPedido crear(PublicacionId publicacionId, EspecieDestino especieDestino,
                              Cantidad cantidad, Dinero precioUnitario) {
         return new LineaPedido(UUID.randomUUID(), publicacionId, especieDestino, cantidad, precioUnitario);
+    }
+
+    /**
+     * Solo para el adaptador de persistencia: "revive" una linea que YA existia con su id.
+     * El subtotal se vuelve a calcular a partir del precio unitario y la cantidad.
+     */
+    public static LineaPedido reconstruir(UUID id, PublicacionId publicacionId, EspecieDestino especieDestino,
+                                          Cantidad cantidad, Dinero precioUnitario) {
+        return new LineaPedido(id, publicacionId, especieDestino, cantidad, precioUnitario);
     }
 
     void cambiarCantidad(Cantidad nuevaCantidad) {

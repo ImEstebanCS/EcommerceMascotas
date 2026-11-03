@@ -17,6 +17,7 @@ import org.junit.jupiter.api.function.Executable;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -120,5 +121,22 @@ class PedidoTest {
         assertEquals(EstadoPedido.CANCELADO, pedido.getEstado());
         assertEquals(1, lineasAReponer.size());
         assertEquals(2, lineasAReponer.get(0).getCantidad().valor());
+    }
+
+    @Test
+    void reconstruirUnPedidoRecalculaElTotalAPartirDeSusLineas() {
+        // Arrange: lineas tal como las devolveria la base de datos
+        LineaPedido collares = LineaPedido.reconstruir(UUID.randomUUID(), PublicacionId.nuevo(), EspecieDestino.PERRO,
+                new Cantidad(2), new Dinero(new BigDecimal("20000"), "COP"));
+        LineaPedido rascador = LineaPedido.reconstruir(UUID.randomUUID(), PublicacionId.nuevo(), EspecieDestino.GATO,
+                new Cantidad(1), new Dinero(new BigDecimal("35000"), "COP"));
+
+        // Act
+        Pedido pedido = Pedido.reconstruir(PedidoId.nuevo(), CompradorId.nuevo(), List.of(collares, rascador),
+                EstadoPedido.CONFIRMADO);
+
+        // Assert: conserva el estado y el total vuelve a ser la suma de los subtotales
+        assertEquals(EstadoPedido.CONFIRMADO, pedido.getEstado());
+        assertEquals(0, new BigDecimal("75000").compareTo(pedido.getTotal().monto()));
     }
 }
