@@ -103,4 +103,21 @@ class PedidoTest {
         assertThrows(ReglaDominioException.class, confirmar);
         assertEquals(EstadoPedido.BORRADOR, pedido.getEstado());
     }
+
+    @Test
+    void cancelarUnPedidoConfirmadoDevuelveSusLineasParaReponerElStock() {
+        // Arrange: un pedido confirmado de 2 collares
+        Pedido pedido = Pedido.crear(PedidoId.nuevo(), CompradorId.nuevo());
+        Publicacion collar = publicacionPublicada("Collar reflectivo", EspecieDestino.PERRO, "20000", 5);
+        pedido.agregarLinea(collar, new Cantidad(2));
+        pedido.confirmar(List.of(collar));
+
+        // Act
+        List<LineaPedido> lineasAReponer = pedido.cancelar();
+
+        // Assert
+        assertEquals(EstadoPedido.CANCELADO, pedido.getEstado());
+        assertEquals(1, lineasAReponer.size());
+        assertEquals(2, lineasAReponer.get(0).getCantidad().valor());
+    }
 }

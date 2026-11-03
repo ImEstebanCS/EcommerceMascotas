@@ -128,9 +128,16 @@ public class Pedido {
         estado = EstadoPedido.ENTREGADO;
     }
 
-    public void cancelar() {
+    /**
+     * Cancela el pedido y devuelve las lineas cuyo stock hay que reponer.
+     * Solo un pedido CONFIRMADO ya desconto stock; uno en BORRADOR no desconto nada,
+     * asi que en ese caso la lista viene vacia.
+     */
+    public List<LineaPedido> cancelar() {
         validarQueSePuedeModificar();
+        List<LineaPedido> lineasAReponer = estado == EstadoPedido.CONFIRMADO ? List.copyOf(lineas) : List.of();
         estado = EstadoPedido.CANCELADO;
+        return lineasAReponer;
     }
 
     private void validarQueSePuedeModificar() {
