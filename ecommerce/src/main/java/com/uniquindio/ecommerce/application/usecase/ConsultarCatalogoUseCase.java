@@ -14,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.UUID;
 
 /**
  * Consultas del catalogo (para cualquier visitante): listado paginado con busqueda y filtros,
@@ -44,9 +43,9 @@ public class ConsultarCatalogoUseCase {
     }
 
     @Transactional(readOnly = true)
-    public Publicacion obtener(UUID publicacionId) {
-        return publicacionRepository.buscarPorId(new PublicacionId(publicacionId))
-                .orElseThrow(() -> new NoSuchElementException("La publicacion " + publicacionId + " no existe"));
+    public Publicacion obtener(PublicacionId publicacionId) {
+        return publicacionRepository.buscarPorId(publicacionId)
+                .orElseThrow(() -> new NoSuchElementException("La publicacion " + publicacionId.valor() + " no existe"));
     }
 
     @Transactional(readOnly = true)

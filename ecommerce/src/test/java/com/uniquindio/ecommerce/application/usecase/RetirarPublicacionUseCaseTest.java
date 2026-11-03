@@ -20,7 +20,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -47,7 +46,7 @@ class RetirarPublicacionUseCaseTest {
         when(publicacionRepository.buscarPorId(arena.getId())).thenReturn(Optional.of(arena));
 
         // Act
-        useCase.ejecutar(arena.getId().valor());
+        useCase.ejecutar(arena.getId());
 
         // Assert
         assertEquals(EstadoPublicacion.RETIRADA, arena.getEstado());
@@ -57,8 +56,8 @@ class RetirarPublicacionUseCaseTest {
     @Test
     void retirarUnaPublicacionQueNoExisteLanzaNoSuchElementExceptionYNoGuardaNada() {
         // Arrange
-        UUID idQueNoExiste = UUID.randomUUID();
-        when(publicacionRepository.buscarPorId(new PublicacionId(idQueNoExiste))).thenReturn(Optional.empty());
+        PublicacionId idQueNoExiste = PublicacionId.nuevo();
+        when(publicacionRepository.buscarPorId(idQueNoExiste)).thenReturn(Optional.empty());
 
         // Act
         Executable retirar = () -> useCase.ejecutar(idQueNoExiste);
