@@ -10,18 +10,21 @@ import com.uniquindio.ecommerce.domain.valueobject.PublicacionId;
 import com.uniquindio.ecommerce.domain.valueobject.Stock;
 import com.uniquindio.ecommerce.domain.valueobject.VendedorId;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 /**
  * Caso de uso del vendedor: crear una publicacion y dejarla publicada.
  * Repository: PublicacionRepository.
  */
+@Service
+@RequiredArgsConstructor
 public class CrearPublicacionUseCase {
 
     private final PublicacionRepository publicacionRepository;
 
-    public CrearPublicacionUseCase(PublicacionRepository publicacionRepository) {
-        this.publicacionRepository = publicacionRepository;
-    }
-
+    @Transactional
     public PublicacionId ejecutar(CrearPublicacionRequest request) {
         Publicacion publicacion = Publicacion.crear(
                 PublicacionId.nuevo(),
