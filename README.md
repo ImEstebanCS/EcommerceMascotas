@@ -27,14 +27,15 @@ ecommerce/src/main/java/com/uniquindio/ecommerce
 │   │   └── response  → PedidoResponse, PublicacionResponse, PageResponse, MasVendidaResponse
 │   └── usecase       → vendedor: CrearPublicacionUseCase, ActualizarStockPublicacionUseCase, RetirarPublicacionUseCase
 │                       comprador: CrearPedidoUseCase, ConfirmarPedidoUseCase, CancelarPedidoUseCase
-│                       consultas: ConsultarCatalogoUseCase
+│                       consultas: ConsultarCatalogoUseCase, ConsultarPedidosUseCase
 └── infrastructure
     ├── config        → OpenApiConfig (Swagger)
     ├── persistence   → PedidoRepositoryEnMemoria, PublicacionRepositoryEnMemoria (solo para pruebas)
     │   └── jpa       → PedidoRepositoryJpa, PublicacionRepositoryJpa (+ sus repositorios de Spring Data)
     │       ├── entity → PedidoEntity, LineaPedidoEntity, PublicacionEntity, DineroEmbeddable
     │       └── mapper → PedidoPersistenceMapper, PublicacionPersistenceMapper
-    └── rest          → ConsultasPublicacionController
+    └── rest          → ConsultasPublicacionController, PedidoController, ConsultasPedidoController
+        ├── mapper    → PedidoMapper (DTO ↔ dominio)
         └── exception → GlobalExceptionHandler
 ```
 
@@ -60,6 +61,29 @@ El paquete `domain` no depende de Spring, JPA ni Lombok. Los repositorios son in
 - El dominio no usa la paginación de Spring: el adaptador convierte el `Page` de Spring en `Pagina`, que es del dominio.
 - La página no puede ser negativa y el tamaño va de 1 a 50; si no, responde 400.
 
+## Pedidos
+
+| Método | Ruta | Qué hace |
+|---|---|---|
+| POST | `/api/pedidos` | Crea un pedido en BORRADOR con sus líneas. Responde 201 con la dirección del pedido nuevo |
+| PUT | `/api/pedidos/{id}/confirmar` | Confirma el pedido y descuenta el stock de cada publicación |
+| PUT | `/api/pedidos/{id}/cancelar` | Cancela el pedido; si ya estaba confirmado, el stock vuelve a las publicaciones |
+| GET | `/api/pedidos?compradorId=` | Pedidos de un comprador |
+| GET | `/api/pedidos/{id}` | Detalle de un pedido (404 si no existe) |
+
+Ejemplo para crear un pedido con los datos de prueba (2 rascadores para el comprador `c1c1…0002`):
+
+```json
+{
+  "compradorId": "c1c1c1c1-0000-4000-8000-000000000002",
+  "lineas": [{ "publicacionId": "b0b0b0b0-0000-4000-8000-000000000005", "cantidad": 2 }]
+}
+```
+
+- El precio no viaja en la petición: lo toma el dominio de la publicación, así nadie puede mandar un precio inventado.
+- Los casos de uso reciben tipos del dominio (`CompradorId`, `PedidoId`, `PublicacionId`, `Cantidad`) y devuelven el `Pedido`. `PedidoMapper` convierte el DTO en esos tipos y el `Pedido` en `PedidoResponse`, así el caso de uso no depende de HTTP.
+- Errores de negocio a propósito para probar (409): pedir más unidades que el stock, pedir una publicación retirada (`…0009`), confirmar dos veces el mismo pedido o cancelar un pedido ENVIADO (`d0d0…0003`).
+
 ## Correcciones de la Entrega 1
 
 | Observación que nos dieron | Qué cambiamos | Dónde se ve (archivo o rama) |
@@ -74,6 +98,7 @@ El paquete `domain` no depende de Spring, JPA ni Lombok. Los repositorios son in
 | `confirmar()` solo revisaba el stock: si el vendedor retiraba una publicación mientras el pedido estaba en borrador, el error salía después, al descontar el stock | `Pedido.confirmar()` ahora revisa que cada publicación siga aceptando pedidos antes de pasar a CONFIRMADO; nueva prueba que lo demuestra | `domain/entity/Pedido.java`, `PedidoTest.confirmarConUnaPublicacionRetirada…` |
 | Cuando un pedido o una publicación no existía, el caso de uso lanzaba `ReglaDominioException`, igual que si se rompiera una regla | Ahora lanza `NoSuchElementException` (se podrá responder 404), y `ReglaDominioException` queda solo para reglas de negocio rotas | `application/usecase/CrearPedidoUseCase.java`, `ConfirmarPedidoUseCase.java` |
 | `diagrama-agregado.md` hablaba de "PedidoMascotas" y "productos", términos que no están en el lenguaje ubicuo | Se usa "Pedido" y "línea de pedido", igual que en el código | `diagrama-agregado.md` |
+| Los casos de uso de pedidos recibían un DTO (`CrearPedidoRequest`) o devolvían uno (`PedidoResponse`), y eso dejaba la capa de aplicación amarrada a la API | Ahora reciben tipos del dominio y devuelven el `Pedido`; el `PedidoMapper` de la API hace la conversión en los dos sentidos | `application/usecase/CrearPedidoUseCase.java`, `infrastructure/rest/mapper/PedidoMapper.java` |
 
 ## Documentación
 

@@ -2,6 +2,7 @@ package com.uniquindio.ecommerce.infrastructure.persistence;
 
 import com.uniquindio.ecommerce.domain.entity.Pedido;
 import com.uniquindio.ecommerce.domain.repository.PedidoRepository;
+import com.uniquindio.ecommerce.domain.valueobject.CompradorId;
 import com.uniquindio.ecommerce.domain.valueobject.PedidoId;
 
 import java.util.ArrayList;
@@ -32,5 +33,12 @@ public class PedidoRepositoryEnMemoria implements PedidoRepository {
     @Override
     public List<Pedido> listar() {
         return new ArrayList<>(pedidos.values());
+    }
+
+    @Override
+    public List<Pedido> buscarPorComprador(CompradorId compradorId) {
+        return pedidos.values().stream()
+                .filter(pedido -> pedido.getCompradorId().equals(compradorId))
+                .toList();
     }
 }
