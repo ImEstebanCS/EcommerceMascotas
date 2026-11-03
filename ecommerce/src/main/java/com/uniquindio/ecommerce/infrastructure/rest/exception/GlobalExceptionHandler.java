@@ -1,10 +1,12 @@
 package com.uniquindio.ecommerce.infrastructure.rest.exception;
 
 import com.uniquindio.ecommerce.domain.exception.ReglaDominioException;
+import com.uniquindio.ecommerce.infrastructure.security.CorreoYaRegistradoException;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -20,8 +22,8 @@ import java.util.NoSuchElementException;
 /**
  * Traduce las excepciones que llegan a cualquier controller en una respuesta JSON
  * con el codigo HTTP correcto:
- * 400 datos invalidos, 404 el recurso no existe, 409 se rompio una regla de negocio.
- * (401 y 403 los responde la configuracion de seguridad.)
+ * 400 datos invalidos, 401 login fallido, 404 el recurso no existe, 409 se rompio una regla de negocio.
+ * (El 401 sin token y el 403 por rol los responde ManejadorErroresSeguridad, antes de llegar aqui.)
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -37,6 +39,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> manejarNoEncontrado(NoSuchElementException ex) {
         String mensaje = ex.getMessage() != null ? ex.getMessage() : "El recurso solicitado no existe";
         return construirRespuesta(HttpStatus.NOT_FOUND, mensaje, null); // 404
+    }
+
+    /** El correo o la contrasena del login no coinciden. */
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<Map<String, Object>> manejarLoginFallido(AuthenticationException ex) {
+        return construirRespuesta(HttpStatus.UNAUTHORIZED, "Correo o contrasena incorrectos", null); // 401
+    }
+
+    /** Se intento registrar un correo que ya tiene cuenta. */
+    @ExceptionHandler(CorreoYaRegistradoException.class)
+    public ResponseEntity<Map<String, Object>> manejarCorreoRepetido(CorreoYaRegistradoException ex) {
+        return construirRespuesta(HttpStatus.CONFLICT, ex.getMessage(), null); // 409
     }
 
     /** Una entrada que valida el caso de uso no es valida (pagina negativa, tamano fuera de rango...). */

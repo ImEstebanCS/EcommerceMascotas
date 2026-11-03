@@ -27,9 +27,11 @@ public class ConsultarPedidosUseCase {
         return pedidoRepository.buscarPorComprador(compradorId);
     }
 
+    /** Un comprador solo ve sus pedidos: si el pedido es de otro, responde como si no existiera. */
     @Transactional(readOnly = true)
-    public Pedido obtener(PedidoId pedidoId) {
+    public Pedido obtener(PedidoId pedidoId, CompradorId compradorId) {
         return pedidoRepository.buscarPorId(pedidoId)
+                .filter(encontrado -> encontrado.getCompradorId().equals(compradorId))
                 .orElseThrow(() -> new NoSuchElementException("El pedido " + pedidoId.valor() + " no existe"));
     }
 }
