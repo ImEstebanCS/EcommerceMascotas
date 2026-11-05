@@ -212,20 +212,56 @@ Errores de la API: 400 datos inválidos, 401 sin token o login fallido, 403 rol 
 
 ## Pruebas
 
-48 pruebas en verde, todas con el patrón AAA (Arrange, Act, Assert):
+53 pruebas en verde, todas con el patrón AAA (Arrange, Act, Assert):
 
 | Tipo | Clases | Qué comprueban |
 |---|---|---|
 | Dominio (JUnit puro) | `PedidoTest`, `PublicacionTest`, `DineroTest`, `CantidadTest` | Las invariantes de los agregados y los value objects, incluidos los casos que rompen una regla |
 | Casos de uso (Mockito) | `CrearPedido…`, `ConfirmarPedido…`, `CancelarPedido…`, `CrearPublicacion…`, `ActualizarStockPublicacion…`, `RetirarPublicacion…`, `ConsultarCatalogo…UseCaseTest` | Que cada caso de uso coordina bien. Cuando se rompe una regla, comprueban con `verify(..., never()).guardar(...)` que no se guarda nada |
-| Controller (`@WebMvcTest`) | `PedidoControllerTest` | 201 con `Location`; **401 sin token, 403 con el rol equivocado y 201 con el rol correcto**; 400 por validación; 404 y 409 con su mensaje |
+| Controller (`@WebMvcTest`) | `PedidoControllerTest`, `PedidoControllerErroresTest` | 201 con `Location`; **401 sin token, 403 con el rol equivocado y 201 con el rol correcto**; 400 por validación; 404 y 409 con su mensaje, y que en esos errores **nunca se llama a `guardar`** |
+| Seguridad (`@SpringBootTest`) | `SeguridadMisPedidosTest` | Sobre `GET /api/pedidos`: **401 sin token, 403 con token de vendedor y 200 con token de comprador** |
 | Repositorio (`@DataJpaTest`) | `PedidoRepositoryJpaTest`, `PublicacionRepositoryJpaTest`, `ConsultasPublicacionRepositoryJpaTest` | Que el agregado se guarda y se lee completo; la consulta paginada y el ranking sobre `data.sql` |
 | Integración (`@SpringBootTest`) | `FlujoPedidoIntegracionTest`, `EcommerceApplicationTests` | El sistema real sin simular nada: login con BCrypt y JWT, crear y confirmar un pedido, y que el stock baje en la base |
 
-**`@DataJpaTest` frente a `@SpringBootTest`:**
-- `@DataJpaTest` levanta solo la parte de JPA (entidades, repositorios y una base H2 de prueba), sin controllers ni seguridad. Por eso es rápido y sirve para probar consultas. Cada prueba corre en una transacción que se deshace al final. En Spring Boot 4 cambió de paquete: ahora es `org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest`.
-- `@SpringBootTest` levanta la aplicación completa. Lo usamos para la prueba de integración, que pasa por todas las capas.
-- `@WebMvcTest` levanta solo la capa web. En `PedidoControllerTest` importamos la configuración de seguridad real para que las reglas de 401 y 403 se prueben de verdad; el token se simula con `jwt()` de spring-security-test.
+## Pruebas avanzadas
+
+Qué prueba cubre cada punto del seguimiento:
+
+| Punto | Dónde está |
+|---|---|
+| 0. Repositorio | `PedidoRepositoryJpaTest` y `PublicacionRepositoryJpaTest`: guardar y recuperar, con `Dinero`, los enums y las líneas intactos. `ConsultasPublicacionRepositoryJpaTest`: la paginación del catálogo (9 publicaciones en 3 páginas) y el ranking con JOIN y GROUP BY (primero el Collar reflectivo) |
+| 1. Endpoint con seguridad | `SeguridadMisPedidosTest` |
+| 2. `@DataJpaTest` | `PedidoRepositoryJpaTest`, `PublicacionRepositoryJpaTest` y `ConsultasPublicacionRepositoryJpaTest` |
+| 3. Prueba de integración | `FlujoPedidoIntegracionTest` |
+| 4. Más casos en el controller | `PedidoControllerErroresTest`: 404 y 409, y en los dos `verify(..., never()).guardar(...)` |
+
+### 1. Probar un endpoint con seguridad
+
+- Escogimos `GET /api/pedidos` (mis pedidos), que según `SecurityConfig` solo la puede usar el rol COMPRADOR.
+- Usamos `@SpringBootTest` con `@AutoConfigureMockMvc` para que se cargue nuestra `SecurityFilterChain` de verdad; con un `@WebMvcTest` solo, Spring pone una seguridad por defecto y no la nuestra.
+- Sin token responde 401 porque la API no sabe quién es. Con un token de VENDEDOR responde 403: sabe quién es, pero su rol no alcanza. Con un token de COMPRADOR responde 200 y trae los 3 pedidos de Ana que hay en `data.sql`.
+- El token no sale del login: lo simulamos con `jwt()` de `spring-security-test`, que mete en la petición un usuario con el `uid` y el rol que le digamos.
+- La autoridad va sin el prefijo `ROLE_` (`"COMPRADOR"`), igual que en nuestro `JwtConfig`.
+- Lo que más nos costó: entender por qué en `PedidoControllerTest`, que es `@WebMvcTest`, teníamos que importar a mano `SecurityConfig`, `JwtConfig` y `ManejadorErroresSeguridad` para que el 401 y el 403 salieran con nuestras reglas.
+
+### 2. `@DataJpaTest` frente a `@SpringBootTest`
+
+- `@DataJpaTest` levanta solo la persistencia: entidades, repositorios de Spring Data y una base H2 de prueba. No carga controllers, ni seguridad, ni nuestros adaptadores.
+- Por eso en cada prueba traemos el adaptador y su mapper con `@Import`, por ejemplo `@Import({PublicacionRepositoryJpa.class, PublicacionPersistenceMapper.class})`. Sin eso la prueba falla porque no encuentra el bean.
+- Cada prueba corre en una transacción que se deshace al final, así una prueba no le cambia los datos a la otra. Es más rápida porque no arranca toda la aplicación.
+- `@SpringBootTest` levanta la aplicación completa. Es más lenta y la usamos cuando queremos probar todo junto: la seguridad (punto 1) y la integración (punto 3).
+- En Spring Boot 4 `@DataJpaTest` cambió de paquete: ahora es `org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest`. Además, las pruebas de cada tecnología quedaron en su propio starter, así que agregamos `testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'` al `build.gradle`; sin ese starter la anotación no existe y no compila.
+- Revisamos que `data.sql` sí se cargue en estas pruebas: el catálogo da 9 publicaciones y el ranking pone primero el Collar reflectivo.
+
+### 3. Prueba de integración
+
+- Una prueba unitaria prueba una sola clase y simula con Mockito todo lo que esa clase usa. Es rápida, pero no asegura que las piezas funcionen juntas.
+- La de integración, `FlujoPedidoIntegracionTest`, recorre el sistema real sin simular nada: login con BCrypt y JWT, controller, caso de uso, dominio, repositorio JPA y la base H2 con `data.sql`.
+- En la prueba, Bruno inicia sesión, crea un pedido de 2 rascadores, lo confirma, y al final se revisa en la base que el stock bajó 2 unidades.
+- Detecta errores que las unitarias no ven, por ejemplo un mapeo de JPA mal hecho o una regla de seguridad mal escrita.
+- La desventaja es que es más lenta y depende de los datos de `data.sql`: si alguien los cambia, la prueba se rompe. Lleva `@Transactional` para deshacer lo que guarda.
+- Conviene para uno o dos flujos importantes del negocio; los casos de borde se prueban mejor con pruebas unitarias.
+- Lo que más nos costó: sacar el token de la respuesta del login dentro de la misma prueba para usarlo en las siguientes peticiones (lo leímos con `JsonPath`).
 
 ## Cómo correr las pruebas
 
