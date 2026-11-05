@@ -263,6 +263,14 @@ Qué prueba cubre cada punto del seguimiento:
 - Conviene para uno o dos flujos importantes del negocio; los casos de borde se prueban mejor con pruebas unitarias.
 - Lo que más nos costó: sacar el token de la respuesta del login dentro de la misma prueba para usarlo en las siguientes peticiones (lo leímos con `JsonPath`).
 
+### Captura de `./gradlew test` en verde
+
+Las 53 pruebas pasan (`gradlew.bat cleanTest test` en la carpeta `ecommerce`):
+
+![gradlew test: BUILD SUCCESSFUL](docs/pruebas/captura-gradlew-test.png)
+
+![Reporte de Gradle: 53 pruebas, 0 fallas, 100 %](docs/pruebas/captura-gradlew-test-reporte.png)
+
 ## Cómo correr las pruebas
 
 Desde la carpeta `ecommerce`:
