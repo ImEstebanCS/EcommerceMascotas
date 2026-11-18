@@ -170,14 +170,14 @@ class PedidoControllerTest {
     }
 
     @Test
-    void cancelarUnPedidoEnviadoResponde409ConElMensajeDelDominio() throws Exception {
+    void cancelarUnPedidoEnviadoResponde422ConElMensajeDelDominio() throws Exception {
         // Arrange: regla de negocio rota, la excepcion viene del dominio
         when(cancelarPedidoUseCase.ejecutar(any(), any()))
                 .thenThrow(new ReglaDominioException("Un pedido ENVIADO ya no se puede modificar"));
 
         // Act & Assert
         mockMvc.perform(put("/api/pedidos/" + UUID.randomUUID() + "/cancelar").with(tokenDeComprador()))
-                .andExpect(status().isConflict())
+                .andExpect(status().isUnprocessableContent())
                 .andExpect(jsonPath("$.mensaje").value("Un pedido ENVIADO ya no se puede modificar"));
     }
 }

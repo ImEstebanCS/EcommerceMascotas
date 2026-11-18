@@ -119,7 +119,7 @@ Se crean al arrancar (`UsuariosIniciales`) y sus ids son los mismos vendedores y
 
 - Requieren el token de un VENDEDOR. La publicación queda a nombre del vendedor del token, y cada vendedor solo cambia o retira las suyas.
 - **400** cuando la petición viene incompleta (falta el nombre, la descripción, el precio…): lo revisan las validaciones del DTO.
-- **409** cuando la petición está completa pero rompe una regla del negocio: especie distinta de PERRO o GATO, precio 0, descripción de más de 500 caracteres, stock negativo o retirar dos veces. Esas reglas viven en el dominio, no en el DTO.
+- **422** cuando la petición está completa pero rompe una regla del negocio: especie distinta de PERRO o GATO, precio 0, descripción de más de 500 caracteres, stock negativo o retirar dos veces. Esas reglas viven en el dominio, no en el DTO.
 
 ## Consultas
 
@@ -154,7 +154,7 @@ Todos requieren el token de un COMPRADOR. Ejemplo para crear un pedido de 2 rasc
 - El comprador no viaja en la petición: sale del token.
 - El precio tampoco: lo toma el dominio de la publicación, así nadie puede mandar un precio inventado.
 - Los casos de uso reciben tipos del dominio (`CompradorId`, `PedidoId`, `PublicacionId`, `Cantidad`) y devuelven el `Pedido`. `PedidoMapper` convierte el DTO en esos tipos y el `Pedido` en `PedidoResponse`, así el caso de uso no depende de HTTP.
-- Errores de negocio a propósito para probar (409): pedir más unidades que el stock, pedir una publicación retirada (`…0009`), confirmar dos veces el mismo pedido o cancelar un pedido ENVIADO (`d0d0…0003`).
+- Errores de negocio a propósito para probar (422): pedir más unidades que el stock, pedir una publicación retirada (`…0009`), confirmar dos veces el mismo pedido o cancelar un pedido ENVIADO (`d0d0…0003`).
 
 ## Demo de punta a punta (en Swagger)
 
@@ -163,7 +163,7 @@ Todos requieren el token de un COMPRADOR. Ejemplo para crear un pedido de 2 rasc
 3. **Authorize → Logout**, `POST /api/auth/login` como comprador (`bruno@mascotas.com` / `comprador123`) y pegar ese token.
 4. `POST /api/pedidos` con el `id` de la publicación y una cantidad (responde 201, pedido en BORRADOR).
 5. `PUT /api/pedidos/{id}/confirmar`: el pedido queda CONFIRMADO y `GET /api/publicaciones/{id}` muestra el stock descontado.
-6. **Error de negocio a propósito:** confirmar otra vez el mismo pedido responde **409** "Solo se puede confirmar un pedido en borrador". Esa excepción la lanza `Pedido.confirmar()` en el dominio y `GlobalExceptionHandler` la convierte en 409.
+6. **Error de negocio a propósito:** confirmar otra vez el mismo pedido responde **422** "Solo se puede confirmar un pedido en borrador". Esa excepción la lanza `Pedido.confirmar()` en el dominio y `GlobalExceptionHandler` la convierte en 422.
 7. `PUT /api/pedidos/{id}/cancelar`: el pedido queda CANCELADO y el stock vuelve.
 8. Seguridad: con el token del comprador, `POST /api/publicaciones` responde **403**; sin token, **401**.
 
@@ -182,6 +182,12 @@ Todos requieren el token de un COMPRADOR. Ejemplo para crear un pedido de 2 rasc
 | Cuando un pedido o una publicación no existía, el caso de uso lanzaba `ReglaDominioException`, igual que si se rompiera una regla | Ahora lanza `NoSuchElementException` (se podrá responder 404), y `ReglaDominioException` queda solo para reglas de negocio rotas | `application/usecase/CrearPedidoUseCase.java`, `ConfirmarPedidoUseCase.java` |
 | `diagrama-agregado.md` hablaba de "PedidoMascotas" y "productos", términos que no están en el lenguaje ubicuo | Se usa "Pedido" y "línea de pedido", igual que en el código | `diagrama-agregado.md` |
 | Los casos de uso recibían un DTO (`CrearPedidoRequest`, `CrearPublicacionRequest`) o devolvían uno (`PedidoResponse`), y eso dejaba la capa de aplicación amarrada a la API | Ahora reciben tipos del dominio y devuelven la entidad (`Pedido`, `Publicacion`); `PedidoMapper` y `PublicacionMapper` hacen la conversión en los dos sentidos | `application/usecase/CrearPedidoUseCase.java`, `CrearPublicacionUseCase.java`, `infrastructure/rest/mapper/` |
+
+## Correcciones de la Entrega 2
+
+| Observación que nos dieron | Qué cambiamos | Dónde se ve |
+|---|---|---|
+| La regla de negocio genérica respondía 409 en vez de 422 | `ReglaDominioException` ahora responde **422 Unprocessable Content**: la petición está bien escrita, pero lo que pide no se puede hacer por una regla del negocio. El **409 Conflict** queda solo para cuando choca con algo que ya existe, como registrar un correo que ya tiene cuenta (`CorreoYaRegistradoException`). Nueva prueba de integración que comprueba los dos códigos | `infrastructure/rest/exception/GlobalExceptionHandler.java`, `CodigosDeErrorIntegracionTest` |
 
 ## Documentación
 
@@ -208,20 +214,20 @@ En Windows: `gradlew.bat bootRun`. Con la aplicación corriendo:
 | Documentación OpenAPI en JSON | http://localhost:8080/api-docs |
 | Consola de la base de datos H2 | http://localhost:8080/h2-console (JDBC URL: `jdbc:h2:mem:ecommercedb`, usuario `sa`, sin contraseña) |
 
-Errores de la API: 400 datos inválidos, 401 sin token o login fallido, 403 rol sin permiso, 404 el recurso no existe, 409 se rompió una regla de negocio. Todos responden un JSON con `status`, `error` y `mensaje`.
+Errores de la API: 400 datos inválidos, 401 sin token o login fallido, 403 rol sin permiso, 404 el recurso no existe, 409 el correo ya tiene cuenta, 422 se rompió una regla de negocio. Todos responden un JSON con `status`, `error` y `mensaje`.
 
 ## Pruebas
 
-53 pruebas en verde, todas con el patrón AAA (Arrange, Act, Assert):
+55 pruebas en verde, todas con el patrón AAA (Arrange, Act, Assert):
 
 | Tipo | Clases | Qué comprueban |
 |---|---|---|
 | Dominio (JUnit puro) | `PedidoTest`, `PublicacionTest`, `DineroTest`, `CantidadTest` | Las invariantes de los agregados y los value objects, incluidos los casos que rompen una regla |
 | Casos de uso (Mockito) | `CrearPedido…`, `ConfirmarPedido…`, `CancelarPedido…`, `CrearPublicacion…`, `ActualizarStockPublicacion…`, `RetirarPublicacion…`, `ConsultarCatalogo…UseCaseTest` | Que cada caso de uso coordina bien. Cuando se rompe una regla, comprueban con `verify(..., never()).guardar(...)` que no se guarda nada |
-| Controller (`@WebMvcTest`) | `PedidoControllerTest`, `PedidoControllerErroresTest` | 201 con `Location`; **401 sin token, 403 con el rol equivocado y 201 con el rol correcto**; 400 por validación; 404 y 409 con su mensaje, y que en esos errores **nunca se llama a `guardar`** |
+| Controller (`@WebMvcTest`) | `PedidoControllerTest`, `PedidoControllerErroresTest` | 201 con `Location`; **401 sin token, 403 con el rol equivocado y 201 con el rol correcto**; 400 por validación; 404 y 422 con su mensaje, y que en esos errores **nunca se llama a `guardar`** |
 | Seguridad (`@SpringBootTest`) | `SeguridadMisPedidosTest` | Sobre `GET /api/pedidos`: **401 sin token, 403 con token de vendedor y 200 con token de comprador** |
 | Repositorio (`@DataJpaTest`) | `PedidoRepositoryJpaTest`, `PublicacionRepositoryJpaTest`, `ConsultasPublicacionRepositoryJpaTest` | Que el agregado se guarda y se lee completo; la consulta paginada y el ranking sobre `data.sql` |
-| Integración (`@SpringBootTest`) | `FlujoPedidoIntegracionTest`, `EcommerceApplicationTests` | El sistema real sin simular nada: login con BCrypt y JWT, crear y confirmar un pedido, y que el stock baje en la base |
+| Integración (`@SpringBootTest`) | `FlujoPedidoIntegracionTest`, `CodigosDeErrorIntegracionTest`, `EcommerceApplicationTests` | El sistema real sin simular nada: login con BCrypt y JWT, crear y confirmar un pedido, y que el stock baje en la base; un correo repetido responde 409 y una regla de negocio rota responde 422 |
 
 ## Pruebas avanzadas
 
@@ -233,7 +239,7 @@ Qué prueba cubre cada punto del seguimiento:
 | 1. Endpoint con seguridad | `SeguridadMisPedidosTest` |
 | 2. `@DataJpaTest` | `PedidoRepositoryJpaTest`, `PublicacionRepositoryJpaTest` y `ConsultasPublicacionRepositoryJpaTest` |
 | 3. Prueba de integración | `FlujoPedidoIntegracionTest` |
-| 4. Más casos en el controller | `PedidoControllerErroresTest`: 404 y 409, y en los dos `verify(..., never()).guardar(...)` |
+| 4. Más casos en el controller | `PedidoControllerErroresTest`: 404 y 422, y en los dos `verify(..., never()).guardar(...)` |
 
 ### 1. Probar un endpoint con seguridad
 
@@ -265,7 +271,7 @@ Qué prueba cubre cada punto del seguimiento:
 
 ### Captura de `./gradlew test` en verde
 
-Las 53 pruebas pasan (`gradlew.bat cleanTest test` en la carpeta `ecommerce`):
+Capturas del seguimiento de pruebas, cuando eran 53 (`gradlew.bat cleanTest test` en la carpeta `ecommerce`). Hoy son 55, con `CodigosDeErrorIntegracionTest`:
 
 ![gradlew test: BUILD SUCCESSFUL](docs/pruebas/captura-gradlew-test.png)
 
