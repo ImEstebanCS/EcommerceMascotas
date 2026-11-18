@@ -49,6 +49,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/error", "/api-docs/**", "/swagger-ui/**",
                                 "/swagger-ui.html", "/h2-console/**").permitAll()
+                        // las recomendaciones salen de lo que compro el comprador del token
+                        .requestMatchers(HttpMethod.GET, "/api/publicaciones/recomendadas").hasAuthority("COMPRADOR")
                         // el catalogo lo puede ver cualquiera
                         .requestMatchers(HttpMethod.GET, "/api/publicaciones/**").permitAll()
                         // solo el vendedor publica, cambia el stock y retira

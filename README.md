@@ -93,6 +93,7 @@ Se crean al arrancar (`UsuariosIniciales`) y sus ids son los mismos vendedores y
 | Rutas | Acceso |
 |---|---|
 | `/api/auth/**`, Swagger, consola H2 | Públicas |
+| `GET /api/publicaciones/recomendadas` (recomendados para tu mascota) | Solo **COMPRADOR** |
 | `GET /api/publicaciones/**` (catálogo, ranking, detalle) | Públicas |
 | `POST /api/publicaciones`, `PUT /api/publicaciones/{id}/stock`, `DELETE /api/publicaciones/{id}` | Solo **VENDEDOR** |
 | `/api/pedidos/**` | Solo **COMPRADOR** |
@@ -128,7 +129,9 @@ Se crean al arrancar (`UsuariosIniciales`) y sus ids son los mismos vendedores y
 | GET | `/api/publicaciones?texto=&especie=&categoria=&pagina=0&tamano=10` | Catálogo paginado: busca el texto en el nombre o la descripción y filtra por especie (`PERRO`, `GATO`) y categoría (`ALIMENTO`, `JUGUETE`, `ACCESORIO`, `HIGIENE`, `SALUD`). No muestra las publicaciones retiradas. Responde el contenido, `totalElementos` y `totalPaginas` |
 | GET | `/api/publicaciones/mas-vendidas?limite=5` | Ranking de las publicaciones con más unidades vendidas (pedidos confirmados, enviados o entregados) |
 | GET | `/api/publicaciones/{id}` | Detalle de una publicación (404 si no existe) |
+| GET | `/api/publicaciones/recomendadas?limite=4` | **Recomendados para tu mascota** (solo COMPRADOR): productos de la especie para la que más compra (perro o gato; si empatan, las dos) que todavía no ha comprado y que se pueden pedir |
 
+- **Funcionalidad propia (Entrega 3):** las recomendaciones salen de los pedidos ya comprados (CONFIRMADO, ENVIADO o ENTREGADO). Con los datos de prueba, a Bruno le salen productos de gato y a Carla de perro. Está en `RecomendarPublicacionesUseCase`.
 - El catálogo es una consulta JPQL con parámetros con nombre, y el ranking usa `JOIN`, `GROUP BY` y `SUM`: el filtro, el conteo y la paginación los hace la base de datos, no Java.
 - El dominio no usa la paginación de Spring: el adaptador convierte el `Page` de Spring en `Pagina`, que es del dominio.
 - La página no puede ser negativa y el tamaño va de 1 a 50; si no, responde 400.
@@ -218,16 +221,16 @@ Errores de la API: 400 datos inválidos, 401 sin token o login fallido, 403 rol 
 
 ## Pruebas
 
-55 pruebas en verde, todas con el patrón AAA (Arrange, Act, Assert):
+59 pruebas en verde, todas con el patrón AAA (Arrange, Act, Assert):
 
 | Tipo | Clases | Qué comprueban |
 |---|---|---|
 | Dominio (JUnit puro) | `PedidoTest`, `PublicacionTest`, `DineroTest`, `CantidadTest` | Las invariantes de los agregados y los value objects, incluidos los casos que rompen una regla |
-| Casos de uso (Mockito) | `CrearPedido…`, `ConfirmarPedido…`, `CancelarPedido…`, `CrearPublicacion…`, `ActualizarStockPublicacion…`, `RetirarPublicacion…`, `ConsultarCatalogo…UseCaseTest` | Que cada caso de uso coordina bien. Cuando se rompe una regla, comprueban con `verify(..., never()).guardar(...)` que no se guarda nada |
+| Casos de uso (Mockito) | `CrearPedido…`, `ConfirmarPedido…`, `CancelarPedido…`, `CrearPublicacion…`, `ActualizarStockPublicacion…`, `RetirarPublicacion…`, `ConsultarCatalogo…`, `RecomendarPublicaciones…UseCaseTest` | Que cada caso de uso coordina bien. Cuando se rompe una regla, comprueban con `verify(..., never()).guardar(...)` que no se guarda nada |
 | Controller (`@WebMvcTest`) | `PedidoControllerTest`, `PedidoControllerErroresTest` | 201 con `Location`; **401 sin token, 403 con el rol equivocado y 201 con el rol correcto**; 400 por validación; 404 y 422 con su mensaje, y que en esos errores **nunca se llama a `guardar`** |
 | Seguridad (`@SpringBootTest`) | `SeguridadMisPedidosTest` | Sobre `GET /api/pedidos`: **401 sin token, 403 con token de vendedor y 200 con token de comprador** |
 | Repositorio (`@DataJpaTest`) | `PedidoRepositoryJpaTest`, `PublicacionRepositoryJpaTest`, `ConsultasPublicacionRepositoryJpaTest` | Que el agregado se guarda y se lee completo; la consulta paginada y el ranking sobre `data.sql` |
-| Integración (`@SpringBootTest`) | `FlujoPedidoIntegracionTest`, `CodigosDeErrorIntegracionTest`, `EcommerceApplicationTests` | El sistema real sin simular nada: login con BCrypt y JWT, crear y confirmar un pedido, y que el stock baje en la base; un correo repetido responde 409 y una regla de negocio rota responde 422 |
+| Integración (`@SpringBootTest`) | `FlujoPedidoIntegracionTest`, `CodigosDeErrorIntegracionTest`, `RecomendacionesIntegracionTest`, `EcommerceApplicationTests` | El sistema real sin simular nada: login con BCrypt y JWT, crear y confirmar un pedido, y que el stock baje en la base; un correo repetido responde 409 y una regla de negocio rota responde 422; las recomendaciones piden sesión y a Bruno le salen productos de gato |
 
 ## Pruebas avanzadas
 
@@ -271,7 +274,7 @@ Qué prueba cubre cada punto del seguimiento:
 
 ### Captura de `./gradlew test` en verde
 
-Capturas del seguimiento de pruebas, cuando eran 53 (`gradlew.bat cleanTest test` en la carpeta `ecommerce`). Hoy son 55, con `CodigosDeErrorIntegracionTest`:
+Capturas del seguimiento de pruebas, cuando eran 53 (`gradlew.bat cleanTest test` en la carpeta `ecommerce`). Hoy son 59:
 
 ![gradlew test: BUILD SUCCESSFUL](docs/pruebas/captura-gradlew-test.png)
 

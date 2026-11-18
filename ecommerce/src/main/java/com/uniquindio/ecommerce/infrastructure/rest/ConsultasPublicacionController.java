@@ -4,14 +4,20 @@ import com.uniquindio.ecommerce.application.dto.response.MasVendidaResponse;
 import com.uniquindio.ecommerce.application.dto.response.PageResponse;
 import com.uniquindio.ecommerce.application.dto.response.PublicacionResponse;
 import com.uniquindio.ecommerce.application.usecase.ConsultarCatalogoUseCase;
+import com.uniquindio.ecommerce.application.usecase.RecomendarPublicacionesUseCase;
 import com.uniquindio.ecommerce.domain.valueobject.CategoriaProducto;
+import com.uniquindio.ecommerce.domain.valueobject.CompradorId;
 import com.uniquindio.ecommerce.domain.valueobject.EspecieDestino;
 import com.uniquindio.ecommerce.domain.valueobject.PublicacionId;
 import com.uniquindio.ecommerce.infrastructure.rest.mapper.PublicacionMapper;
+import com.uniquindio.ecommerce.infrastructure.security.UsuarioAutenticado;
 
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,6 +38,7 @@ import java.util.UUID;
 public class ConsultasPublicacionController {
 
     private final ConsultarCatalogoUseCase consultarCatalogoUseCase;
+    private final RecomendarPublicacionesUseCase recomendarPublicacionesUseCase;
     private final PublicacionMapper mapper;
 
     /** Catalogo paginado: busqueda por texto en nombre o descripcion, y filtros por especie y categoria. */
@@ -57,6 +64,22 @@ public class ConsultasPublicacionController {
             @Max(value = 20, message = "El limite debe estar entre 1 y 20") int limite) {
         return consultarCatalogoUseCase.masVendidas(limite).stream()
                 .map(MasVendidaResponse::desde)
+                .toList();
+    }
+
+    /**
+     * "Recomendados para tu mascota": productos de la especie que mas compra el comprador del token
+     * y que todavia no ha comprado. Solo para el rol COMPRADOR (regla en SecurityConfig).
+     */
+    @GetMapping("/recomendadas")
+    public List<PublicacionResponse> recomendadas(
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(name = "limite", defaultValue = "4")
+            @Min(value = 1, message = "El limite debe estar entre 1 y 10")
+            @Max(value = 10, message = "El limite debe estar entre 1 y 10") int limite) {
+        CompradorId comprador = new CompradorId(UsuarioAutenticado.id(jwt));
+        return recomendarPublicacionesUseCase.ejecutar(comprador, limite).stream()
+                .map(mapper::toResponse)
                 .toList();
     }
 
