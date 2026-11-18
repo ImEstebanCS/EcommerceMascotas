@@ -9,7 +9,7 @@ import java.math.BigDecimal;
  * Datos que envia el vendedor para crear una publicacion (caso de uso CrearPublicacionUseCase).
  * El vendedor no viene aqui: sale del token, asi nadie puede publicar a nombre de otro.
  * Las validaciones revisan que la peticion venga completa (400); las reglas del negocio
- * (precio mayor a cero, solo perro o gato, descripcion de maximo 500) las revisa el dominio (409).
+ * (precio mayor a cero, solo perro o gato, descripcion de maximo 500) las revisa el dominio (422).
  */
 public record CrearPublicacionRequest(
         @NotBlank(message = "El nombre del producto es obligatorio")

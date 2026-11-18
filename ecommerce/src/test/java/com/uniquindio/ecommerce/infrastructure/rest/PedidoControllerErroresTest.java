@@ -47,7 +47,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Casos de error de PUT /api/pedidos/{id}/confirmar: el pedido no existe (404) y una regla de negocio
- * rota (409). A diferencia de PedidoControllerTest, aqui ConfirmarPedidoUseCase es el real y lo que se
+ * rota (422). A diferencia de PedidoControllerTest, aqui ConfirmarPedidoUseCase es el real y lo que se
  * simula son los repositorios; asi se puede comprobar con verify(..., never()) que guardar nunca se llamo
  * y que no queda nada guardado a medias.
  */
@@ -107,7 +107,7 @@ class PedidoControllerErroresTest {
     }
 
     @Test
-    void confirmarUnPedidoYaConfirmadoResponde409YNoGuardaNada() throws Exception {
+    void confirmarUnPedidoYaConfirmadoResponde422YNoGuardaNada() throws Exception {
         // Arrange: un pedido de Ana que ya se confirmo una vez
         Publicacion rascador = rascadorPublicado();
         Pedido pedido = Pedido.crear(PedidoId.nuevo(), new CompradorId(ANA));
@@ -116,9 +116,9 @@ class PedidoControllerErroresTest {
         when(pedidoRepository.buscarPorId(pedido.getId())).thenReturn(Optional.of(pedido));
         when(publicacionRepository.buscarPorId(rascador.getId())).thenReturn(Optional.of(rascador));
 
-        // Act & Assert: Pedido.confirmar() lanza ReglaDominioException y GlobalExceptionHandler responde 409
+        // Act & Assert: Pedido.confirmar() lanza ReglaDominioException y GlobalExceptionHandler responde 422
         mockMvc.perform(put("/api/pedidos/" + pedido.getId().valor() + "/confirmar").with(tokenDeAna()))
-                .andExpect(status().isConflict())
+                .andExpect(status().isUnprocessableContent())
                 .andExpect(jsonPath("$.mensaje").value("Solo se puede confirmar un pedido en borrador"));
 
         // Assert: la regla se rompio antes de guardar, asi que no se guardo nada ni se desconto stock

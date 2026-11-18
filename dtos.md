@@ -2,7 +2,7 @@
 
 Los DTOs son `record` y viven en [application/dto](ecommerce/src/main/java/com/uniquindio/ecommerce/application/dto). Usan tipos simples (`UUID`, `String`, `int`, `BigDecimal`) para no exponer el dominio hacia afuera. Los casos de uso no los reciben: los mappers de la API (`PublicacionMapper`, `PedidoMapper`) los convierten en value objects antes de llamarlos.
 
-Las validaciones del DTO (`@NotNull`, `@NotBlank`, `@Min`) revisan que la petición venga completa y bien escrita, y si falla responden **400**. Las reglas del negocio las revisa el dominio, y si se rompen responden **409**.
+Las validaciones del DTO (`@NotNull`, `@NotBlank`, `@Min`) revisan que la petición venga completa y bien escrita, y si falla responden **400**. Las reglas del negocio las revisa el dominio, y si se rompen responden **422**. El **409** queda solo para el correo repetido en el registro.
 
 ## CrearPublicacionRequest
 
@@ -13,11 +13,11 @@ El vendedor no viene en el body: sale del token (claim `uid`), así nadie puede 
 | Campo | Tipo | Validación del DTO (400) | Por qué es necesario |
 |---|---|---|---|
 | `nombreProducto` | `String` | `@NotBlank` | Lo que ve el comprador en el anuncio. |
-| `descripcion` | `String` | `@NotBlank` | Obligatoria: explica el producto al comprador (material, tamaño, para qué sirve). Que no supere 500 caracteres lo revisa el dominio (409). |
-| `especieDestino` | `String` | `@NotBlank` | Regla 1: solo PERRO o GATO. Se convierte con `EspecieDestino.desde(...)`; otra especie responde 409. |
-| `montoPrecio` | `BigDecimal` | `@NotNull` | Regla 2: precio mayor a cero (lo revisa el dominio, 409). |
+| `descripcion` | `String` | `@NotBlank` | Obligatoria: explica el producto al comprador (material, tamaño, para qué sirve). Que no supere 500 caracteres lo revisa el dominio (422). |
+| `especieDestino` | `String` | `@NotBlank` | Regla 1: solo PERRO o GATO. Se convierte con `EspecieDestino.desde(...)`; otra especie responde 422. |
+| `montoPrecio` | `BigDecimal` | `@NotNull` | Regla 2: precio mayor a cero (lo revisa el dominio, 422). |
 | `moneda` | `String` | `@NotBlank` | Junto con el monto forma el value object `Dinero`. |
-| `stockInicial` | `int` | — | Unidades disponibles al publicar; con 0 no se puede publicar (409). |
+| `stockInicial` | `int` | — | Unidades disponibles al publicar; con 0 no se puede publicar (422). |
 | `categoria` | `String` | `@NotBlank` | Clasifica el producto (ALIMENTO, JUGUETE, ACCESORIO, HIGIENE, SALUD). |
 
 ## ActualizarStockRequest
@@ -26,7 +26,7 @@ Body de `PUT /api/publicaciones/{id}/stock` (caso de uso **ActualizarStockPublic
 
 | Campo | Tipo | Validación del DTO (400) | Por qué es necesario |
 |---|---|---|---|
-| `stock` | `Integer` | `@NotNull` | Las unidades nuevas. Es `Integer` y no `int` para que, si no viene, responda 400 en vez de poner el stock en 0 sin avisar. Un número negativo lo rechaza el value object `Stock` (409). |
+| `stock` | `Integer` | `@NotNull` | Las unidades nuevas. Es `Integer` y no `int` para que, si no viene, responda 400 en vez de poner el stock en 0 sin avisar. Un número negativo lo rechaza el value object `Stock` (422). |
 
 ## PublicacionResponse
 
@@ -52,7 +52,7 @@ El comprador no viene en el body: sale del token (claim `uid`), así nadie puede
 |---|---|---|---|
 | `lineas` | `List<LineaPedidoRequest>` | `@NotEmpty` | Los productos que se piden; un pedido sin líneas no se puede confirmar. |
 | `lineas[].publicacionId` | `UUID` | `@NotNull` | Para buscar la publicación y tomar su precio, especie y stock. |
-| `lineas[].cantidad` | `int` | `@Min(1)` | Unidades pedidas. Que no superen el stock lo revisa el dominio (409). |
+| `lineas[].cantidad` | `int` | `@Min(1)` | Unidades pedidas. Que no superen el stock lo revisa el dominio (422). |
 
 El precio no viene en el request a propósito: lo toma el dominio de la publicación, así el comprador no puede mandar un precio inventado.
 

@@ -22,16 +22,21 @@ import java.util.NoSuchElementException;
 /**
  * Traduce las excepciones que llegan a cualquier controller en una respuesta JSON
  * con el codigo HTTP correcto:
- * 400 datos invalidos, 401 login fallido, 404 el recurso no existe, 409 se rompio una regla de negocio.
+ * 400 datos invalidos, 401 login fallido, 404 el recurso no existe, 409 el correo ya tiene cuenta,
+ * 422 se rompio una regla de negocio.
  * (El 401 sin token y el 403 por rol los responde ManejadorErroresSeguridad, antes de llegar aqui.)
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    /** Una regla del dominio se rompio (sin stock, publicacion retirada, pedido enviado...). */
+    /**
+     * Una regla del dominio se rompio (sin stock, publicacion retirada, pedido enviado...).
+     * Es 422 y no 409: la peticion esta bien escrita, pero lo que pide no se puede hacer por una regla
+     * del negocio. El 409 queda para cuando choca con algo que ya existe, como un correo registrado.
+     */
     @ExceptionHandler(ReglaDominioException.class)
     public ResponseEntity<Map<String, Object>> manejarReglaDominio(ReglaDominioException ex) {
-        return construirRespuesta(HttpStatus.CONFLICT, ex.getMessage(), null); // 409
+        return construirRespuesta(HttpStatus.UNPROCESSABLE_CONTENT, ex.getMessage(), null); // 422
     }
 
     /** El pedido o la publicacion pedida no existe. */

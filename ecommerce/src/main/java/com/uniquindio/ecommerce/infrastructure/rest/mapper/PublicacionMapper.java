@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 /**
  * Convierte entre los DTOs de la API de publicaciones y los tipos del dominio, en los dos sentidos.
  * Si un valor rompe una regla del negocio (por ejemplo, una especie que no es PERRO ni GATO),
- * el value object lanza ReglaDominioException y la API responde 409.
+ * el value object lanza ReglaDominioException y la API responde 422.
  */
 @Component
 public class PublicacionMapper {
